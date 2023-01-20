@@ -1,5 +1,8 @@
+from copy import deepcopy
+from time import perf_counter
 from re import finditer, findall
 from math import prod
+from statistics import mean, median
 
 def word_list_generator1(text_file_path):
     word_length = 5
@@ -53,3 +56,91 @@ def word_scorer(words_list, letters_freq):
     words_scored_list.sort(key=lambda x: x[-1], reverse=True)
 
     return words_scored_list
+
+def hint_generator(guess_word, solution_word):
+    word_length = 5
+    guess_word = list(guess_word)
+    solution_word = list(solution_word)
+    if len(guess_word) == word_length and len(solution_word) == word_length:
+        i = 0
+        hint = ['B' for element in range(word_length)]
+        for i in range(word_length):
+            if guess_word[i] == solution_word[i]:
+                hint[i] = 'G'
+            elif guess_word[i] in solution_word:
+                hint[i] = 'O'
+        return ''.join(hint)
+    else:
+        return False
+
+def process_hint(guess, hint, words_list_in):
+    words_list = deepcopy(words_list_in)
+    black_letters = []
+    blacks = [i for i, x in enumerate(hint) if x=='B']
+    for i in blacks:
+        if guess[i] not in black_letters:
+            black_letters.append(guess[i])
+
+    orange_letters = []
+    orange_positional = []
+    oranges = [i for i, x in enumerate(hint) if x=='O']
+    for i in oranges:
+        orange_letters.append(guess[i])
+        orange_positional.append((guess[i], i))
+
+    green_positional = []
+    greens = [i for i, x in enumerate(hint) if x=='G']
+    for i in greens:
+        green_positional.append((guess[i], i))
+
+    for word in words_list:
+        word_list = list(word)
+        next_word = False
+
+        if set(word_list) & set(black_letters):
+            words_list.remove(word)
+            next_word = True
+        if len(orange_letters) != 0 and not next_word:
+            for orange_tuple in orange_positional:
+                if word_list[orange_tuple[1]] == orange_tuple[0] and not next_word:
+                    words_list.remove(word)
+                    next_word = True
+            if not set(word_list) & set(orange_letters) and not next_word:
+                words_list.remove(word)
+                next_word = True
+
+        if not next_word:
+            for green_tuple in green_positional:
+                if word_list[green_tuple[1]] != green_tuple[0] and not next_word:
+                    words_list.remove(word)
+                    next_word = True
+
+    return words_list
+
+def rank_guesses(words_list, test_solutions):
+    number_to_test = 100
+    test_solutions = test_solutions[0:number_to_test]
+    total_test_count = len(test_solutions)
+    count = 0
+    guesses_ranked = []
+    start_count = len(test_solutions)
+    start_time = perf_counter()
+    for guess in words_list:
+        start_time = perf_counter()
+        word_count_list = []
+        for test_solution in test_solutions:
+            maybe_hint = hint_generator(guess, test_solution)
+            maybe_remaining_words_list = process_hint(guess, maybe_hint, test_solutions)
+            word_count_list.append(len(maybe_remaining_words_list))
+        average1 = round(1 - mean(word_count_list) / start_count, 3)
+        average2 = round(1 - median(word_count_list) / start_count, 3)
+        elapsed_time = round(perf_counter() - start_time, 3)
+        count += 1
+        countdown = len(words_list) - count
+        guess_eval = (guess, average1, average2)
+        print(f"Evaluated guess: '{str(guess_eval)}' with {total_test_count} test solutions in {elapsed_time} seconds. {countdown} to go.")
+        guesses_ranked.append(guess_eval)
+        
+    guesses_ranked.sort(key=lambda x: x[-1], reverse=True)
+
+    return guesses_ranked
