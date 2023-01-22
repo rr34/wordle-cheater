@@ -3,14 +3,32 @@ from re import finditer, findall
 from math import prod
 from statistics import mean, median
 
-def word_list_parser1(text_file_path):
+def word_list_parser1():
     word_length = 5
+    text_file_path = './wordle-2309.txt'
     with open(text_file_path, 'r') as words_file:
         words_str = words_file.read()
     words_starts = [i.start() for i in finditer(': ', words_str)]
     words_list = [words_str[i+2:i+2+word_length].strip() for i in words_starts]
 
     return words_list
+
+def word_list_parser2():
+    word_length = 5
+    text_file_path = './websters-unabridged.txt'
+    with open(text_file_path, 'r') as words_file:
+        whole_dictionary = words_file.read()
+    dictionary_words_list = whole_dictionary.split(sep=None)
+    selected_words_list = []
+    for text_str in dictionary_words_list:
+        if text_str.isalpha() and text_str == text_str.upper() and len(list(text_str)) == word_length:
+            selected_words_list.append(text_str)
+            if text_str == 'STEAM':
+                pass
+    
+    selected_words_list = set(selected_words_list)
+
+    return selected_words_list
 
 def letter_counter(words_list, letters_list):
     word_length = 5
@@ -52,11 +70,13 @@ def word_scorer(words_list, letters_freq):
         for letter_tuple in letters_freq:
             chars_boolean = [(letter_tuple[0] == i) for i in list(word)]
             positional_totals = [prod(i) for i in zip(chars_boolean, letter_tuple[1])]
-            letter_score = max(positional_totals)
-            score += letter_score
+            positional_score = max(positional_totals)
+            score += positional_score
+            if any(chars_boolean):
+                score += letter_tuple[3]
 
         words_scored_list.append((word, word_pos_scores, score))
-    
+
     words_scored_list.sort(key=lambda x: x[-1], reverse=True)
 
     return words_scored_list

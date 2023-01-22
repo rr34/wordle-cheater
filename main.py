@@ -9,12 +9,11 @@ class AppWindow(Tk):
     def __init__(self):
         super().__init__()
         #---------------------------------------- App Initialization ------------------------------
-        self.title('Wordle Cheater by Nate')
+        self.title('Wordle Scratchpad by Nate')
         self.state('normal')
         self.log_string = ''
-        words_list_filename = './wordle-2309.txt'
         start_time = perf_counter()
-        self.all_words_list = functions.word_list_parser1(words_list_filename)
+        self.all_words_list = functions.word_list_parser2()
         elapsed_time = perf_counter() - start_time
         pretty_str = f'Parsed words into list in {elapsed_time} seconds.\n'
         self.log_string += pretty_str
@@ -133,7 +132,7 @@ class AppWindow(Tk):
         start_time = perf_counter()
         words_scored_list = functions.word_scorer(self.remaining_words, letters_freq_list)
         elapsed_time = perf_counter() - start_time
-        self.log_string += f'Words ranked by sum of positional frequency of letters (each letter single count) in {elapsed_time} seconds.\n'
+        self.log_string += f"Words ranked by sum of each letter positional frequency + word appearance frequency (each unique letter single count, so repeat letters don't add) in {elapsed_time} seconds.\n"
         top_to_show = min(len(words_scored_list), 10)
         pretty_str = 'Top words:\n'
         rank_count = 1
