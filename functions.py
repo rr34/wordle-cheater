@@ -1,10 +1,9 @@
-from copy import deepcopy
 from time import perf_counter
 from re import finditer, findall
 from math import prod
 from statistics import mean, median
 
-def word_list_generator1(text_file_path):
+def word_list_parser1(text_file_path):
     word_length = 5
     with open(text_file_path, 'r') as words_file:
         words_str = words_file.read()
@@ -20,13 +19,18 @@ def letter_counter(words_list, letters_list):
     letters_freq_list = []
     for letter in letters_list:
         positional_totals = list(0 for element in range(word_length)) # zeros
-        counter = 0
+        letter_counter = 0
+        letter_in_word_counter = 0
         for word in words_list:
             chars_boolean = [(letter == i) for i in list(word)]
             positional_totals = [sum(x) for x in zip(chars_boolean, positional_totals)]
-            counter += len(findall(letter, word))
+            letter_counter += len(findall(letter, word))
+            if letter in word:
+                letter_in_word_counter += 1
         positional_totals = [round(i/total_words, 3) for i in positional_totals]
-        letters_freq_list.append((letter, positional_totals, round(counter/total_characters, 3)))
+        letter_freq = round(letter_counter/total_characters, 3)
+        letter_in_word_freq = round(letter_in_word_counter / total_words, 3)
+        letters_freq_list.append((letter, positional_totals, letter_freq, letter_in_word_freq))
 
     letters_freq_list.sort(key=lambda x: x[-1], reverse=True)
 
@@ -74,7 +78,7 @@ def hint_generator(guess_word, solution_word):
         return False
 
 def process_hint(guess, hint, words_list_in):
-    words_list = deepcopy(words_list_in)
+    removed_words_list = []
     black_letters = []
     blacks = [i for i, x in enumerate(hint) if x=='B']
     for i in blacks:
@@ -93,32 +97,36 @@ def process_hint(guess, hint, words_list_in):
     for i in greens:
         green_positional.append((guess[i], i))
 
-    for word in words_list:
+    for word in words_list_in:
         word_list = list(word)
         next_word = False
 
         if set(word_list) & set(black_letters):
-            words_list.remove(word)
+            removed_words_list.append(word)
             next_word = True
         if len(orange_letters) != 0 and not next_word:
             for orange_tuple in orange_positional:
                 if word_list[orange_tuple[1]] == orange_tuple[0] and not next_word:
-                    words_list.remove(word)
+                    removed_words_list.append(word)
                     next_word = True
-            if not set(word_list) & set(orange_letters) and not next_word:
-                words_list.remove(word)
-                next_word = True
+            if not next_word:
+                check_oranges_in = [(i in word_list) for i in orange_letters]
+                if not all(i for i in check_oranges_in):
+                    removed_words_list.append(word)
+                    next_word = True
 
         if not next_word:
             for green_tuple in green_positional:
                 if word_list[green_tuple[1]] != green_tuple[0] and not next_word:
-                    words_list.remove(word)
+                    removed_words_list.append(word)
                     next_word = True
 
-    return words_list
+    words_list_in = list(set(words_list_in) - set(removed_words_list))
+
+    return words_list_in
 
 def rank_guesses(words_list, test_solutions):
-    number_to_test = 100
+    number_to_test = 50
     test_solutions = test_solutions[0:number_to_test]
     total_test_count = len(test_solutions)
     count = 0
