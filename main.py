@@ -14,8 +14,8 @@ class AppWindow(Tk):
         self.log_string = ''
         start_time = perf_counter()
         self.all_words_list = functions.word_list_parser2()
-        elapsed_time = perf_counter() - start_time
-        pretty_str = f'Parsed words into list in {elapsed_time} seconds.\n'
+        elapsed_time = round(perf_counter() - start_time, 6)
+        pretty_str = f"Parsed Webster's Unabridged Dictionary into 5-letter word list in {elapsed_time} seconds.\n"
         self.log_string += pretty_str
         self.alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
         #---------------------------------------- App Variables -----------------------------------
@@ -123,7 +123,7 @@ class AppWindow(Tk):
     def cheat1(self, event):
         start_time = perf_counter()
         letters_freq_list = functions.letter_counter(self.remaining_words, self.alphabet)
-        elapsed_time = perf_counter() - start_time
+        elapsed_time = round(perf_counter() - start_time, 6)
         self.log_string += f'Counted word list letters, sorted by frequency in {elapsed_time} seconds.\n'
         pretty_str = ''
         for letter_data in letters_freq_list:
@@ -131,8 +131,8 @@ class AppWindow(Tk):
         self.log_string += f'Letters ranked by likelihood of single appearance in word list:\n{pretty_str}\n'
         start_time = perf_counter()
         words_scored_list = functions.word_scorer(self.remaining_words, letters_freq_list)
-        elapsed_time = perf_counter() - start_time
-        self.log_string += f"Words ranked by sum of each letter positional frequency + word appearance frequency (each unique letter single count, so repeat letters don't add) in {elapsed_time} seconds.\n"
+        elapsed_time = round(perf_counter() - start_time, 6)
+        self.log_string += f"Words ranked by sum of each letter [positional frequency + word appearance frequency] (each unique letter single count, so repeat letters don't add) in {elapsed_time} seconds.\n"
         top_to_show = min(len(words_scored_list), 10)
         pretty_str = 'Top words:\n'
         rank_count = 1

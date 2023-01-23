@@ -23,8 +23,6 @@ def word_list_parser2():
     for text_str in dictionary_words_list:
         if text_str.isalpha() and text_str == text_str.upper() and len(list(text_str)) == word_length:
             selected_words_list.append(text_str)
-            if text_str == 'STEAM':
-                pass
     
     selected_words_list = set(selected_words_list)
 
@@ -162,7 +160,7 @@ def rank_guesses(words_list, test_solutions):
             word_count_list.append(len(maybe_remaining_words_list))
         average1 = round(1 - mean(word_count_list) / start_count, 3)
         average2 = round(1 - median(word_count_list) / start_count, 3)
-        elapsed_time = round(perf_counter() - start_time, 3)
+        elapsed_time = round(perf_counter() - start_time, 6)
         count += 1
         countdown = len(words_list) - count
         guess_eval = (guess, average1, average2)
