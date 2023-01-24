@@ -1,4 +1,4 @@
-Parsed words into list in 1.4654310879999954 seconds.
+Parsed Webster's Unabridged Dictionary into 5-letter-word list in 1.4654310879999954 seconds.
 RAISE: guess #1
 BBBBG: hint #1
 From 6246 words to 254 words in 0.009 seconds.
