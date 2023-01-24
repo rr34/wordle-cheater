@@ -1,4 +1,7 @@
 # Wordle Scratchpad by Nate
+## Log File
+If you play Wordle, you will immediately recognize the value of this output: ![example log file](example-log-file.txt)  
+  
 ## The User Interface
 The UI is very unusual. I was experimenting with keyboard-only operation and wanted to make all user inputs go through the 'clipboard.' Therefore, the 'flow' of using the program is as follows:  
 `<t>` type your guess  
@@ -12,6 +15,3 @@ At this point, you should see an output showing the number of remaining possible
 Use the recommended guesses to make another guess in Wordle then repeat the steps above for your second guess and so on.  
 `<s>` is used to transfer from the clipboard to practice solution.  
 `<a>` is used to transfer from the clipboard to practice guess and the program will show the Wordle hint based on the solution-guess combination.  
-
-## Log File
-If you play Wordle, you will immediately recognize the value of this output: ![example log file](example-log-file.txt)

@@ -22,36 +22,38 @@ class AppWindow(Tk):
         self.reset_variables(self)
 
         #---------------------------------------- Layout -----------------------------------
+        cell_width = 100
+        cell_height = 10
         self.user_input = StringVar()
         self.user_input.set('User input')
         self.user_input_label = Label(textvariable=self.user_input)
-        self.user_input_label.grid(row=0, column=0)
+        self.user_input_label.grid(row=0, column=0, ipadx=cell_width, ipady=cell_height)
 
         self.guess_hint_pairs_str = StringVar()
         self.guess_hint_pairs_str.set('Guess-Hint Pairs')
         self.guess_hint_pairs_label = Label(textvariable=self.guess_hint_pairs_str)
-        self.guess_hint_pairs_label.grid(row=0, column=1, rowspan=10)
+        self.guess_hint_pairs_label.grid(row=0, column=1, rowspan=10, ipadx=cell_width, ipady=cell_height)
 
         self.practice_guess_str = StringVar()
         self.practice_guess_str.set('Enter a practice guess with <a> key')
         self.practice_guess_label = Label(textvariable=self.practice_guess_str)
-        self.practice_guess_label.grid(row=1, column=2)
+        self.practice_guess_label.grid(row=1, column=2, ipadx=cell_width, ipady=cell_height)
         self.practice_solution_str = StringVar()
         self.practice_solution_str.set('Enter a practice solution with <s> key')
         self.practice_solution_label = Label(textvariable=self.practice_solution_str)
-        self.practice_solution_label.grid(row=0, column=2)
+        self.practice_solution_label.grid(row=0, column=2, ipadx=cell_width, ipady=cell_height)
         self.practice_hint_str = StringVar()
         self.practice_hint_str.set('Will show hint with valid guess and solution.')
         self.practice_hint_label = Label(textvariable=self.practice_hint_str)
-        self.practice_hint_label.grid(row=2, column=2)
+        self.practice_hint_label.grid(row=2, column=2, ipadx=cell_width, ipady=cell_height)
 
         self.user_input_label = Label(text='<t> Input text\n<g> Enter guess\n<h> Enter hint\n<a> Enter practice guess\n<s> Enter practice solution word\n<r> Reset all\n<c> Recommend guesses\n<Ctrl-x> Close with log file save')
-        self.user_input_label.grid(row=10, column=0, columnspan=3)
+        self.user_input_label.grid(row=10, column=0, columnspan=3, ipadx=cell_width, ipady=cell_height)
 
         self.info_string = StringVar()
         self.info_string.set(pretty_str)
         self.info_label = Label(textvariable=self.info_string)
-        self.info_label.grid(row=11, column=0, columnspan=3)
+        self.info_label.grid(row=11, column=0, columnspan=3, ipadx=cell_width, ipady=cell_height)
 
         #---------------------------------------- Control Keys ------------------------------------
         self.bind('<t>', self.get_text_input)
