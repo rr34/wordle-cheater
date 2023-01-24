@@ -1,6 +1,6 @@
 # Wordle Scratchpad by Nate
 ## The User Interface
-The UI is very unusual. I was experimenting with keyboard-only operation and wanted to make all user inputs go through the 'clipboard.' Therefore, the 'flow' of using the program is as follows:
+The UI is very unusual. I was experimenting with keyboard-only operation and wanted to make all user inputs go through the 'clipboard.' Therefore, the 'flow' of using the program is as follows:  
 `<t>` type your guess  
 `<Enter>` puts the guess on the clipboard  
 `<g>` to transfer from the clipboard to guess in the program  
