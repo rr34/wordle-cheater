@@ -130,7 +130,7 @@ class AppWindow(Tk):
         pretty_str = ''
         for letter_data in letters_freq_list:
             pretty_str += f"'{str(letter_data[0])}' frequency, positional: {str(letter_data[1])}, by letter: {str(letter_data[2])}, by word appearance: {str(letter_data[3])}\n"
-        self.log_string += f'Letters ranked by likelihood of single appearance in word list:\n{pretty_str}\n'
+        self.log_string += f'Letters ranked by frequency of single appearance in word list:\n{pretty_str}\n'
         start_time = perf_counter()
         words_scored_list = functions.word_scorer(self.remaining_words, letters_freq_list)
         elapsed_time = round(perf_counter() - start_time, 6)
