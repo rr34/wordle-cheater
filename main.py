@@ -168,5 +168,5 @@ class AppWindow(Tk):
 
 #------------------------------------------- Procedural --------------------------------------
 if __name__ == '__main__':
-    wordle_cheater_nate = AppWindow()
-    wordle_cheater_nate.mainloop()
+    wordle_scratchpad_nate = AppWindow()
+    wordle_scratchpad_nate.mainloop()
