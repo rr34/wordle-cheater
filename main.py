@@ -96,7 +96,7 @@ class AppWindow(Tk):
         start_words = len(self.remaining_words)
         self.remaining_words = functions.process_hint(self.guesses[-1], self.hints[-1], self.remaining_words)
         end_words = len(self.remaining_words)
-        elapsed_time = round(perf_counter() - start_time, 3)
+        elapsed_time = round(perf_counter() - start_time, 6)
         pretty_str = f'From {start_words} words to {end_words} words in {elapsed_time} seconds.\n'
         self.log_string += pretty_str
         self.info_string.set(pretty_str)
