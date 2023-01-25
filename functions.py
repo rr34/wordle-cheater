@@ -52,15 +52,19 @@ def letter_counter(words_list, letters_list):
 
     return letters_freq_list
 
-def word_scorer(words_list, letters_freq):
+def word_scorer(words_list, letters_freq, utility_scoring=False, known_positions=[]):
     words_scored_list = []
     just_letters_list = [i[0] for i in letters_freq]
     for word in words_list:
         word_pos_scores = []
         index_in_word = 0
         for word_letter in list(word):
+            if len(list(word_letter)) > 1:
+                pass
             letter_index = just_letters_list.index(word_letter)
             positional_score = letters_freq[letter_index][1][index_in_word]
+            if utility_scoring and index_in_word in known_positions:
+                positional_score = 0
             word_pos_scores.append(positional_score)
             index_in_word += 1
 
@@ -95,7 +99,9 @@ def hint_generator(guess_word, solution_word):
     else:
         return False
 
-def process_hint(guess, hint, words_list_in):
+def process_hint(guess, hint, words_list_in, utility_list=False):
+    if utility_list:
+        hint = hint.replace('G', 'O')
     removed_words_list = []
     black_letters = []
     blacks = [i for i, x in enumerate(hint) if x=='B']
@@ -141,7 +147,7 @@ def process_hint(guess, hint, words_list_in):
 
     words_list_in = list(set(words_list_in) - set(removed_words_list))
 
-    return words_list_in
+    return words_list_in, greens
 
 def rank_guesses(words_list, test_solutions):
     number_to_test = 50

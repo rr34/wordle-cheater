@@ -1,6 +1,5 @@
 from copy import deepcopy
-from tkinter import Tk, StringVar, Label, Entry, Toplevel
-from tkinter.filedialog import askopenfilename
+from tkinter import Tk, StringVar, Label
 from tkinter.simpledialog import askstring
 from time import perf_counter
 import functions
@@ -71,8 +70,8 @@ class AppWindow(Tk):
         self.guesses = []
         self.hints = []
         self.remaining_words = deepcopy(self.all_words_list)
-        self.black_letters = []
-        self.orange_letters = []
+        self.utility_words = deepcopy(self.all_words_list)
+        self.known_positions = []
         self.guess_count = 0
         self.hint_count = 0
 
@@ -94,10 +93,17 @@ class AppWindow(Tk):
         self.display_guesses_hints()
         start_time = perf_counter()
         start_words = len(self.remaining_words)
-        self.remaining_words = functions.process_hint(self.guesses[-1], self.hints[-1], self.remaining_words)
+        self.remaining_words, greens = functions.process_hint(self.guesses[-1], self.hints[-1], self.remaining_words)
+        self.known_positions.append(greens)
         end_words = len(self.remaining_words)
         elapsed_time = round(perf_counter() - start_time, 6)
         pretty_str = f'From {start_words} words to {end_words} words in {elapsed_time} seconds.\n'
+        start_time = perf_counter()
+        start_words = len(self.utility_words)
+        self.utility_words, greens = functions.process_hint(self.guesses[-1], self.hints[-1], self.utility_words, utility_list=True)
+        end_words = len(self.utility_words)
+        elapsed_time = round(perf_counter() - start_time, 6)
+        pretty_str += f'Utility guesses list from {start_words} words to {end_words} words in {elapsed_time} seconds.\n'
         self.log_string += pretty_str
         self.info_string.set(pretty_str)
         
@@ -130,25 +136,39 @@ class AppWindow(Tk):
         pretty_str = ''
         for letter_data in letters_freq_list:
             pretty_str += f"'{str(letter_data[0])}' frequency, positional: {str(letter_data[1])}, by letter: {str(letter_data[2])}, by word appearance: {str(letter_data[3])}\n"
-        self.log_string += f'Letters ranked by frequency of single appearance in word list:\n{pretty_str}\n'
+        self.log_string += f'Letters ranked by frequency of single appearance in possible solutions list:\n{pretty_str}\n'
         start_time = perf_counter()
         words_scored_list = functions.word_scorer(self.remaining_words, letters_freq_list)
         elapsed_time = round(perf_counter() - start_time, 6)
-        self.log_string += f"Words ranked by sum of each letter [positional frequency + word appearance frequency] (each unique letter single count, so repeat letters don't add) in {elapsed_time} seconds.\n"
+        self.log_string += f"Possible solutions ranked by sum of each letter [positional frequency + word appearance frequency] (each unique letter single count, so repeat letters don't add) in {elapsed_time} seconds.\n"
+        start_time = perf_counter()
+        utility_guesses_scored_list = functions.word_scorer(self.utility_words, letters_freq_list, utility_scoring=True, known_positions=self.known_positions)
+        elapsed_time = round(perf_counter() - start_time, 6)
+        self.log_string += f"Utility guesses ranked by sum of each letter in unknown positions [positional frequency + word appearance frequency]; in known positions [word appearance frequency] in {elapsed_time} seconds.\n"
         top_to_show = min(len(words_scored_list), 10)
-        pretty_str = 'Top words:\n'
+        pretty_str = 'Top possible solutions:\n'
         rank_count = 1
         for word_data in words_scored_list[0:top_to_show]:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
-        self.info_string.set(pretty_str)
-        pretty_str = 'Words ranked:\n'
+        top_to_show = min(len(utility_guesses_scored_list), 10)
+        pretty_str += 'Top utility guesses:\n'
+        rank_count = 1
+        for word_data in utility_guesses_scored_list[0:top_to_show]:
+            pretty_str += f'{rank_count}. {str(word_data)}\n'
+            rank_count += 1
+        self.info_string.set(self.info_string.get() + pretty_str)
+        pretty_str = 'Possible solutions ranked:\n'
         rank_count = 1
         for word_data in words_scored_list:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
+        pretty_str += 'Utility guesses ranked:\n'
+        rank_count = 1
+        for word_data in utility_guesses_scored_list:
+            pretty_str += f'{rank_count}. {str(word_data)}\n'
+            rank_count += 1
         self.log_string += pretty_str + '\n'
-
 
     def cheat2(self, event):
         guesses_ranked = functions.rank_guesses(self.all_words_list, self.remaining_words)
