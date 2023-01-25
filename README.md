@@ -1,5 +1,10 @@
 # Wordle Scratchpad by Nate
-## Log File
+
+## Download Dictionary for Word List
+![Webster Unabridged Dictionary Download](https://gutenberg.org/ebooks/29765.txt.utf-8)  
+Rename the file to `websters-unabridged.txt` and place it in the folder with the code. The parsing function is tailored to get its word list from this dictionary.  
+
+## Log Output File
 If you play Wordle, you will immediately recognize the value of this output: ![example log file](example-log-file.txt)  
   
 ## The User Interface
