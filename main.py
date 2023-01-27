@@ -94,10 +94,7 @@ class AppWindow(Tk):
         self.display_guesses_hints()
         start_time = perf_counter()
         start_words = len(self.remaining_words)
-        self.remaining_words, greens = functions.process_hint(self.guesses[-1], self.hints[-1], self.remaining_words)
-        for i, x in enumerate(self.known_positions):
-            if greens[i]:
-                self.known_positions[i] = greens[i]
+        self.remaining_words = functions.process_hint(self.guesses[-1], self.hints[-1], self.remaining_words)
         end_words = len(self.remaining_words)
         elapsed_time = round(perf_counter() - start_time, 6)
         pretty_str = f'From {start_words} words to {end_words} words in {elapsed_time} seconds.\n'
@@ -139,7 +136,7 @@ class AppWindow(Tk):
         elapsed_time = round(perf_counter() - start_time, 6)
         self.log_string += f"Possible solutions ranked by sum of each letter [positional frequency + word appearance frequency] (each unique letter single count, so repeat letters don't add) in {elapsed_time} seconds.\n"
         start_time = perf_counter()
-        utility_guesses_scored_list = functions.word_scorer(self.utility_words, letters_freq_list, utility_scoring=True, known_positions=self.known_positions)
+        utility_guesses_scored_list = functions.word_scorer(self.utility_words, letters_freq_list, utility_scoring=True)
         elapsed_time = round(perf_counter() - start_time, 6)
         self.log_string += f"Utility guesses ranked by sum of each letter in unknown positions [positional frequency + word appearance frequency]; in known positions [word appearance frequency] in {elapsed_time} seconds.\n"
         pretty_str = 'Top possible solutions:\n'

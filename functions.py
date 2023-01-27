@@ -52,7 +52,7 @@ def letter_counter(words_list, letters_list):
 
     return letters_freq_list
 
-def word_scorer(words_list, letters_freq, utility_scoring=False, known_positions=[]):
+def word_scorer(words_list, letters_freq, utility_scoring=False):
     word_length = 5
     words_scored_list = []
     just_letters_list = [i[0] for i in letters_freq]
@@ -72,18 +72,14 @@ def word_scorer(words_list, letters_freq, utility_scoring=False, known_positions
             positional_score = max(positional_totals)
             frequency_in_words = letter_tuple[3]
     
-            if utility_scoring:
-                unknown_positions_boolean = [(a and not b) for a, b in zip(chars_boolean, known_positions)]
-                unknown_positional_totals = [prod(i) for i in zip(unknown_positions_boolean, letter_tuple[1])]
-                unknown_positional_score = max(unknown_positional_totals)
             if not utility_scoring:
                 score += positional_score
                 if any(chars_boolean):
                     score += frequency_in_words
             elif utility_scoring:
-                score += unknown_positional_score
-                if letter_tuple[3] not in known_positions:
-                    score += unknown_positional_score
+                fifty_percent_good = [(abs(x-0.5)*-2+1) for x in positional_totals]
+                score += max(fifty_percent_good)
+                score += abs(letter_tuple[3]-0.5)*-2+1
 
         words_scored_list.append((word, word_pos_scores, score))
 
@@ -153,14 +149,7 @@ def process_hint(guess, hint, words_list_in):
 
     words_list_in = list(set(words_list_in) - set(removed_words_list))
 
-    greens_out = []
-    for i, x in enumerate(hint):
-        if x == 'G':
-            greens_out.append(guess[i])
-        else:
-            greens_out.append(False)
-
-    return words_list_in, greens_out
+    return words_list_in
 
 def rank_guesses(words_list, test_solutions):
     number_to_test = 50
