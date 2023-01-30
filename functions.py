@@ -52,10 +52,11 @@ def letter_counter(words_list, letters_list):
 
     return letters_freq_list
 
-def word_scorer(words_list, letters_freq, utility_scoring=False):
+def guess_scorer(words_list, letters_freq, scoring_type=False, letters_to_play=''):
     word_length = 5
     words_scored_list = []
     just_letters_list = [i[0] for i in letters_freq]
+
     for word in words_list:
         word_pos_scores = []
         index_in_word = 0
@@ -69,17 +70,22 @@ def word_scorer(words_list, letters_freq, utility_scoring=False):
         for letter_tuple in letters_freq:
             chars_boolean = [(letter_tuple[0] == x) for x in list(word)]
             positional_totals = [prod(i) for i in zip(chars_boolean, letter_tuple[1])]
-            positional_score = max(positional_totals)
-            frequency_in_words = letter_tuple[3]
+            positional_score = max([(abs(x-0.5)*-2+1) for x in positional_totals])
+            frequency_in_words = abs(letter_tuple[3]-0.5)*-2+1
     
-            if not utility_scoring:
+            if not scoring_type:
                 score += positional_score
                 if any(chars_boolean):
                     score += frequency_in_words
-            elif utility_scoring:
-                fifty_percent_good = [(abs(x-0.5)*-2+1) for x in positional_totals]
-                score += max(fifty_percent_good)
-                score += abs(letter_tuple[3]-0.5)*-2+1
+            elif scoring_type == 'utility':
+                if letter_tuple[3] != 1.0:
+                    score += positional_score
+                    score += frequency_in_words
+        if scoring_type == 'play letters':
+            for letter in list(letters_to_play):
+                if letter in word:
+                    score += 1
+            score = score / word_length
 
         words_scored_list.append((word, word_pos_scores, score))
 

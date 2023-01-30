@@ -45,6 +45,10 @@ class AppWindow(Tk):
         self.practice_hint_str.set('Will show hint with valid guess and solution.')
         self.practice_hint_label = Label(textvariable=self.practice_hint_str)
         self.practice_hint_label.grid(row=2, column=2, ipadx=cell_width, ipady=cell_height)
+        self.lucas_situation_letters = StringVar()
+        self.lucas_situation_letters.set('Enter letters to play and type <l> to find words.')
+        self.lucas_situation_label = Label(textvariable=self.lucas_situation_letters)
+        self.lucas_situation_label.grid(row=3, column=2, ipadx=cell_width, ipady=cell_height)
 
         self.user_input_label = Label(text='<t> Input text\n<g> Enter guess\n<h> Enter hint\n<a> Enter practice guess\n<s> Enter practice solution word\n<r> Reset all\n<c> Recommend guesses\n<Ctrl-x> Close with log file save')
         self.user_input_label.grid(row=10, column=0, columnspan=3, ipadx=cell_width, ipady=cell_height)
@@ -61,7 +65,7 @@ class AppWindow(Tk):
         self.bind('<a>', self.new_practice_guess)
         self.bind('<s>', self.new_practice_solution)
         self.bind('<c>', self.cheat1)
-        self.bind('<l>', self.save_log)
+        self.bind('<l>', self.new_play_these_letters)
         self.bind('<r>', self.reset_variables)
         self.bind('<Control-Key-x>', self.exit_with_logfile)
 
@@ -124,21 +128,24 @@ class AppWindow(Tk):
 
     def cheat1(self, event):
         start_time = perf_counter()
-        letters_freq_list = functions.letter_counter(self.remaining_words, self.alphabet)
+        self.letters_freq_list = functions.letter_counter(self.remaining_words, self.alphabet)
         elapsed_time = round(perf_counter() - start_time, 6)
         self.log_string += f'Counted word list letters, sorted by frequency in {elapsed_time} seconds.\n'
         pretty_str = ''
-        for letter_data in letters_freq_list:
+        for letter_data in self.letters_freq_list:
             pretty_str += f"'{str(letter_data[0])}' frequency, positional: {str(letter_data[1])}, by letter: {str(letter_data[2])}, by word appearance: {str(letter_data[3])}\n"
         self.log_string += f'Letters ranked by frequency of single appearance in possible solutions list:\n{pretty_str}\n'
+        
         start_time = perf_counter()
-        words_scored_list = functions.word_scorer(self.remaining_words, letters_freq_list)
+        words_scored_list = functions.guess_scorer(self.remaining_words, self.letters_freq_list)
         elapsed_time = round(perf_counter() - start_time, 6)
         self.log_string += f"Possible solutions ranked by sum of each letter [positional frequency + word appearance frequency] (each unique letter single count, so repeat letters don't add) in {elapsed_time} seconds.\n"
+        
         start_time = perf_counter()
-        utility_guesses_scored_list = functions.word_scorer(self.utility_words, letters_freq_list, utility_scoring=True)
+        utility_guesses_scored_list = functions.guess_scorer(self.utility_words, self.letters_freq_list, scoring_type='utility')
         elapsed_time = round(perf_counter() - start_time, 6)
         self.log_string += f"Utility guesses ranked by sum of each letter in unknown positions [positional frequency + word appearance frequency]; in known positions [word appearance frequency] in {elapsed_time} seconds.\n"
+        
         pretty_str = 'Top possible solutions:\n'
         top_to_show = min(len(words_scored_list), 15)
         rank_count = 1
@@ -146,12 +153,13 @@ class AppWindow(Tk):
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
         pretty_str += 'Top utility guesses:\n'
-        top_to_show = min(len(utility_guesses_scored_list), 15)
+        top_to_show = min(len(utility_guesses_scored_list), 10)
         rank_count = 1
         for word_data in utility_guesses_scored_list[0:top_to_show]:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
         self.info_string.set(self.info_string.get() + pretty_str)
+
         pretty_str = '\nPossible solutions ranked:\n'
         rank_count = 1
         for word_data in words_scored_list:
@@ -165,14 +173,28 @@ class AppWindow(Tk):
             rank_count += 1
         self.log_string += pretty_str + '\n'
 
-    def cheat2(self, event):
-        guesses_ranked = functions.rank_guesses(self.all_words_list, self.remaining_words)
-        guesses_rank_str = ''
-        for guess_ranked in guesses_ranked:
-            guesses_rank_str += str(guess_ranked) + '\n'
-        with open('./guesses_ranked.txt', 'w') as file:
-            file.write(guesses_rank_str)
-        print('I did it?')
+    def new_play_these_letters(self, event):
+        self.lucas_situation_letters.set(self.user_input.get())
+        start_time = perf_counter()
+        play_letters_guesses = functions.guess_scorer(self.utility_words, self.letters_freq_list, scoring_type='play letters', letters_to_play=self.lucas_situation_letters.get())
+        elapsed_time = round(perf_counter() - start_time, 6)
+
+        self.log_string += f"Guesses with needed letters ranked in {elapsed_time} seconds.\n"
+        pretty_str = f"Top 'play-these-letters' for these letters: {self.lucas_situation_letters.get()}:\n"
+        top_to_show = min(len(play_letters_guesses), 15)
+        rank_count = 1
+        for word_data in play_letters_guesses[0:top_to_show]:
+            pretty_str += f'{rank_count}. {str(word_data)}\n'
+            rank_count += 1
+        self.info_string.set(pretty_str)
+
+        pretty_str = f"Top 'play-these-letters' for these letters: {self.lucas_situation_letters.get()}:\n"
+        rank_count = 1
+        top_to_show = min(len(play_letters_guesses), 15)
+        for word_data in play_letters_guesses[0:top_to_show]:
+            pretty_str += f'{rank_count}. {str(word_data)}\n'
+            rank_count += 1
+        self.log_string += pretty_str + '\n'
 
     def save_log(self, event):
         log_filename = self.practice_solution_str.get().lower() + '.txt'
