@@ -1,7 +1,7 @@
 from time import perf_counter
 from re import finditer, findall
 from math import prod
-from statistics import mean, median
+from statistics import mean, median, multimode
 
 def word_list_parser1():
     word_length = 5
@@ -110,7 +110,7 @@ def hint_generator(guess_word, solution_word):
         return False
 
 def process_hint(guess, hint, words_list_in):
-    removed_words_list = []
+    words_list_out = []
     black_letters = []
     blacks = [i for i, x in enumerate(hint) if x=='B']
     for i in blacks:
@@ -131,35 +131,32 @@ def process_hint(guess, hint, words_list_in):
 
     for word in words_list_in:
         word_list = list(word)
-        next_word = False
+        word_passes = True
 
         if set(word_list) & set(black_letters):
-            removed_words_list.append(word)
-            next_word = True
-        if len(orange_letters) != 0 and not next_word:
+            word_passes = False
+        if len(orange_letters) != 0 and word_passes:
             for orange_tuple in orange_positional:
-                if word_list[orange_tuple[1]] == orange_tuple[0] and not next_word:
-                    removed_words_list.append(word)
-                    next_word = True
-            if not next_word:
+                if word_list[orange_tuple[1]] == orange_tuple[0] and word_passes:
+                    word_passes = False
+            if word_passes:
                 check_oranges_in = [(i in word_list) for i in orange_letters]
                 if not all(i for i in check_oranges_in):
-                    removed_words_list.append(word)
-                    next_word = True
+                    word_passes = False
 
-        if not next_word:
+        if word_passes:
             for green_tuple in green_positional:
-                if word_list[green_tuple[1]] != green_tuple[0] and not next_word:
-                    removed_words_list.append(word)
-                    next_word = True
+                if word_list[green_tuple[1]] != green_tuple[0] and word_passes:
+                    word_passes = False
 
-    words_list_in = list(set(words_list_in) - set(removed_words_list))
+        if word_passes:
+            words_list_out.append(word)
 
-    return words_list_in
+    # words_list_in = list(set(words_list_in) - set(removed_words_list))
+
+    return words_list_out
 
 def rank_guesses(words_list, test_solutions):
-    number_to_test = 50
-    test_solutions = test_solutions[0:number_to_test]
     total_test_count = len(test_solutions)
     count = 0
     guesses_ranked = []
@@ -172,14 +169,19 @@ def rank_guesses(words_list, test_solutions):
             maybe_hint = hint_generator(guess, test_solution)
             maybe_remaining_words_list = process_hint(guess, maybe_hint, test_solutions)
             word_count_list.append(len(maybe_remaining_words_list))
-        average1 = round(1 - mean(word_count_list) / start_count, 3)
-        average2 = round(1 - median(word_count_list) / start_count, 3)
+        word_count_list = list(filter((1).__ne__, word_count_list))
+        remaining_worst_case = max(word_count_list)
+        remaining_best_case = min(word_count_list)
+        remaining_mean = round(mean(word_count_list), 3)
+        remaining_median = round(median(word_count_list), 3)
+        remaining_mode = multimode(word_count_list)
+        normalized_score = round(1 - mean(word_count_list)/start_count, 3)
         elapsed_time = round(perf_counter() - start_time, 6)
         count += 1
         countdown = len(words_list) - count
-        guess_eval = (guess, average1, average2)
-        print(f"Evaluated guess: '{str(guess_eval)}' with {total_test_count} test solutions in {elapsed_time} seconds. {countdown} to go.")
+        guess_eval = (guess, remaining_worst_case, remaining_best_case, remaining_mean, remaining_median, remaining_mode, normalized_score)
         guesses_ranked.append(guess_eval)
+        print(f"Evaluated guess: '{str(guess_eval)}' with {total_test_count} test solutions in {elapsed_time} seconds. {countdown} to go.")
         
     guesses_ranked.sort(key=lambda x: x[-1], reverse=True)
 
