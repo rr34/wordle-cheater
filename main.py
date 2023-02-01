@@ -147,13 +147,13 @@ class AppWindow(Tk):
         elapsed_time = round(perf_counter() - start_time, 6)
         self.log_string += f"Utility guesses ranked by sum of each letter in unknown positions [positional frequency + word appearance frequency]; in known positions [word appearance frequency] in {elapsed_time} seconds.\n"
         
-        pretty_str = 'Top possible solutions:\n(WORD, positional frequencies, score)\n'
+        pretty_str = 'Top possible solutions:\n(Word, positional frequencies, score)\n'
         top_to_show = min(len(words_scored_list), 15)
         rank_count = 1
         for word_data in words_scored_list[0:top_to_show]:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
-        pretty_str += 'Top utility guesses:\n(WORD, positional frequencies, score)\n'
+        pretty_str += 'Top utility guesses:\n(Word, positional frequencies, score)\n'
         top_to_show = min(len(utility_guesses_scored_list), 10)
         rank_count = 1
         for word_data in utility_guesses_scored_list[0:top_to_show]:
@@ -179,7 +179,7 @@ class AppWindow(Tk):
         words_scored_list = functions.rank_guesses(self.utility_words, self.remaining_words)
         elapsed_time = round(perf_counter() - start_time, 6)
         pretty_str = f"Guesses ranked using performance against remaining solutions in {elapsed_time} seconds.\n"
-        pretty_str += 'Top ranked guesses by average words remaining after hints from remaining solutions:\n(WORD, possible solution?, worst-case, best-case, mean, median, modes, unique hints generated, percent eliminated)\n'
+        pretty_str += 'Top ranked guesses by average words remaining after hints from remaining solutions:\n(Word, possible solution?, worst-case, best-case, mean, median, modes, unique hints generated, percent eliminated)\n'
         top_to_show = min(len(words_scored_list), 25)
         rank_count = 1
         for word_data in words_scored_list[0:top_to_show]:
