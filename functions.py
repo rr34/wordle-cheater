@@ -164,24 +164,38 @@ def rank_guesses(words_list, test_solutions):
     start_time = perf_counter()
     for guess in words_list:
         start_time = perf_counter()
-        word_count_list = []
+        if guess in test_solutions:
+            guess_is_possible = True
+            guess_is_possible_str = 'Y'
+        else:
+            guess_is_possible = False
+            guess_is_possible_str = 'N'
+        remaining_after_lists = []
+        hints_list = []
+        remaining_count_list = []
         for test_solution in test_solutions:
-            maybe_hint = hint_generator(guess, test_solution)
-            maybe_remaining_words_list = process_hint(guess, maybe_hint, test_solutions)
-            word_count_list.append(len(maybe_remaining_words_list))
-        word_count_list = list(filter((1).__ne__, word_count_list))
-        remaining_worst_case = max(word_count_list)
-        remaining_best_case = min(word_count_list)
-        remaining_mean = round(mean(word_count_list), 3)
-        remaining_median = round(median(word_count_list), 3)
-        remaining_mode = multimode(word_count_list)
-        normalized_score = round(1 - mean(word_count_list)/start_count, 3)
+            if guess != test_solution and (not guess_is_possible or not any(guess in x for x in remaining_after_lists)):
+                maybe_hint = hint_generator(guess, test_solution)
+                if not maybe_hint in hints_list:
+                    maybe_remaining_words_list = process_hint(guess, maybe_hint, test_solutions)
+                    hints_list.append(maybe_hint)
+                    remaining_after_lists.append(maybe_remaining_words_list)
+                    remaining_count_list.append(len(maybe_remaining_words_list))
+
+        # remaining_count_list = list(filter((1).__ne__, remaining_count_list)) 
+        remaining_worst_case = max(remaining_count_list)
+        remaining_best_case = min(remaining_count_list)
+        remaining_mean = round(mean(remaining_count_list), 3)
+        remaining_median = round(median(remaining_count_list), 3)
+        remaining_mode = multimode(remaining_count_list)
+        unique_hints = len(hints_list)
+        normalized_score = round(1 - mean(remaining_count_list)/start_count, 3)
         elapsed_time = round(perf_counter() - start_time, 6)
         count += 1
         countdown = len(words_list) - count
-        guess_eval = (guess, remaining_worst_case, remaining_best_case, remaining_mean, remaining_median, remaining_mode, normalized_score)
+        guess_eval = (guess, guess_is_possible_str, remaining_worst_case, remaining_best_case, remaining_mean, remaining_median, remaining_mode, unique_hints, normalized_score)
         guesses_ranked.append(guess_eval)
-        print(f"Evaluated guess: '{str(guess_eval)}' with {total_test_count} test solutions in {elapsed_time} seconds. {countdown} to go.")
+        print(f"Evaluation time: {elapsed_time}. Guesses remaining to evaluate: {countdown}")
         
     guesses_ranked.sort(key=lambda x: x[-1], reverse=True)
 

@@ -179,7 +179,7 @@ class AppWindow(Tk):
         words_scored_list = functions.rank_guesses(self.utility_words, self.remaining_words)
         elapsed_time = round(perf_counter() - start_time, 6)
         pretty_str = f"Guesses ranked using performance against remaining solutions in {elapsed_time} seconds.\n"
-        pretty_str += 'Top ranked guesses by average words remaining after hints from remaining solutions:\n(WORD, worst-case, best-case, mean, median, modes, percent eliminated)\n'
+        pretty_str += 'Top ranked guesses by average words remaining after hints from remaining solutions:\n(WORD, possible solution?, worst-case, best-case, mean, median, modes, unique hints generated, percent eliminated)\n'
         top_to_show = min(len(words_scored_list), 25)
         rank_count = 1
         for word_data in words_scored_list[0:top_to_show]:
@@ -196,7 +196,7 @@ class AppWindow(Tk):
 
         self.log_string += f"Guesses with needed letters ranked in {elapsed_time} seconds.\n"
         pretty_str = f"Top 'play-these-letters' for these letters: {self.lucas_situation_letters.get()}:\n"
-        top_to_show = min(len(play_letters_guesses), 15)
+        top_to_show = min(len(play_letters_guesses), 25)
         rank_count = 1
         for word_data in play_letters_guesses[0:top_to_show]:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
@@ -205,7 +205,7 @@ class AppWindow(Tk):
 
         pretty_str = f"Top 'play-these-letters' for these letters: {self.lucas_situation_letters.get()}:\n"
         rank_count = 1
-        top_to_show = min(len(play_letters_guesses), 15)
+        top_to_show = min(len(play_letters_guesses), 25)
         for word_data in play_letters_guesses[0:top_to_show]:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
