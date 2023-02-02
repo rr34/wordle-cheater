@@ -51,7 +51,7 @@ class AppWindow(Tk):
         self.lucas_situation_label = Label(textvariable=self.lucas_situation_letters)
         self.lucas_situation_label.grid(row=3, column=2, ipadx=cell_width, ipady=cell_height)
 
-        self.user_input_label = Label(text='<t> Input text\n<g> Enter guess\n<h> Enter hint\n<a> Enter practice guess\n<s> Enter practice solution word\n<r> Reset all\n<c> Recommend guesses\n<c> Show words containing letters entered on the clipboard.<Ctrl-x> Close with log file save')
+        self.user_input_label = Label(text='<t> Input text\n<g> Enter guess\n<h> Enter hint\n<a> Enter practice guess\n<s> Enter practice solution word\n<r> Reset all\n<c> Show possible solutions\n<b> Recommend guesses based on unique hints generated\n<l> Show words containing letters entered on the clipboard.\n<Ctrl-x> Close with log file save')
         self.user_input_label.grid(row=10, column=0, columnspan=3, ipadx=cell_width, ipady=cell_height)
 
         self.info_string = StringVar()
@@ -182,12 +182,12 @@ class AppWindow(Tk):
         elapsed_time = round(perf_counter() - start_time, 6)
         pretty_str = f"\nGuesses ranked using performance against remaining solutions in {elapsed_time} seconds.\n"
         pretty_str += 'Top guesses by most unique hints generated:\n(Word, possible solution Y/N, worst-case, best-case, mean, median, modes, unique hints generated)\n'
-        top_to_show = min(len(words_scored_list), 50000)
+        top_to_show = min(len(words_scored_list), 50)
         rank_count = 1
         for word_data in words_scored_list[0:top_to_show]:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
-        # self.info_string.set(pretty_str)
+        self.info_string.set(pretty_str)
         self.log_string += pretty_str
 
     def new_play_these_letters(self, event):
