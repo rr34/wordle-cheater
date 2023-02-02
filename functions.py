@@ -180,20 +180,20 @@ def rank_guesses(words_list, test_solutions):
                     maybe_remaining_words_list = process_hint(guess, maybe_hint, test_solutions)
                     hints_list.append(maybe_hint)
                     remaining_after_lists.append(maybe_remaining_words_list)
-                    remaining_count_list.append(len(maybe_remaining_words_list))
 
-        # remaining_count_list = list(filter((1).__ne__, remaining_count_list)) 
+        remaining_count_list = [len(x) for x in remaining_after_lists]
+        # remaining_count_list = list(filter((1).__ne__, remaining_count_list))
         remaining_worst_case = max(remaining_count_list)
         remaining_best_case = min(remaining_count_list)
         remaining_mean = round(mean(remaining_count_list), 3)
         remaining_median = round(median(remaining_count_list), 3)
         remaining_mode = multimode(remaining_count_list)
         unique_hints = len(hints_list)
-        normalized_score = round(1 - mean(remaining_count_list)/start_count, 3)
+        # normalized_score = round(1 - mean(remaining_count_list)/start_count, 3)
         elapsed_time = round(perf_counter() - start_time, 6)
         count += 1
         countdown = len(words_list) - count
-        guess_eval = (guess, guess_is_possible_str, remaining_worst_case, remaining_best_case, remaining_mean, remaining_median, remaining_mode, unique_hints, normalized_score)
+        guess_eval = (guess, guess_is_possible_str, remaining_worst_case, remaining_best_case, remaining_mean, remaining_median, remaining_mode, unique_hints)
         guesses_ranked.append(guess_eval)
         print(f"Evaluation time: {elapsed_time}. Guesses remaining to evaluate: {countdown}")
         

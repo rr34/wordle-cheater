@@ -11,6 +11,7 @@ class AppWindow(Tk):
         self.title('Wordle Scratchpad by Nate')
         self.state('normal')
         self.log_string = ''
+        self.section_separator = '\n----------------------------------------------------------------------------------------------------\n'
         start_time = perf_counter()
         self.all_words_list = functions.word_list_parser2()
         elapsed_time = round(perf_counter() - start_time, 6)
@@ -94,6 +95,7 @@ class AppWindow(Tk):
     def new_hint(self, event):
         self.hint_count += 1
         self.hints.append(self.user_input.get())
+        self.log_string += self.section_separator
         self.log_string += f'{self.guesses[-1]}: guess #{self.guess_count}\n'
         self.log_string += f'{self.hints[-1]}: hint #{self.hint_count}\n'
         self.display_guesses_hints()
@@ -131,16 +133,16 @@ class AppWindow(Tk):
         start_time = perf_counter()
         self.letters_freq_list = functions.letter_counter(self.remaining_words, self.alphabet)
         elapsed_time = round(perf_counter() - start_time, 6)
-        self.log_string += f'Counted word list letters, sorted by frequency in {elapsed_time} seconds.\n'
+        self.log_string += f'\nCounted word list letters, sorted by frequency in {elapsed_time} seconds.\n'
         pretty_str = ''
         for letter_data in self.letters_freq_list:
             pretty_str += f"'{str(letter_data[0])}' frequency, positional: {str(letter_data[1])}, by letter: {str(letter_data[2])}, by word appearance: {str(letter_data[3])}\n"
-        self.log_string += f'Letters ranked by frequency of single appearance in possible solutions list:\n{pretty_str}\n'
+        self.log_string += 'Letters ranked by frequency of single appearance in possible solutions list:\n' + pretty_str
         
         start_time = perf_counter()
         words_scored_list = functions.guess_scorer(self.remaining_words, self.letters_freq_list)
         elapsed_time = round(perf_counter() - start_time, 6)
-        self.log_string += f"Possible solutions ranked by sum of each letter [positional frequency + word appearance frequency] (each unique letter single count, so repeat letters don't add) in {elapsed_time} seconds.\n"
+        self.log_string += f"\nPossible solutions ranked by sum of each letter [positional frequency + word appearance frequency] (each unique letter single count, so repeat letters don't add) in {elapsed_time} seconds.\n"
         
         start_time = perf_counter()
         utility_guesses_scored_list = functions.guess_scorer(self.utility_words, self.letters_freq_list, scoring_type='utility')
@@ -178,14 +180,14 @@ class AppWindow(Tk):
         start_time = perf_counter()
         words_scored_list = functions.rank_guesses(self.utility_words, self.remaining_words)
         elapsed_time = round(perf_counter() - start_time, 6)
-        pretty_str = f"Guesses ranked using performance against remaining solutions in {elapsed_time} seconds.\n"
-        pretty_str += 'Top ranked guesses by average words remaining after hints from remaining solutions:\n(Word, possible solution?, worst-case, best-case, mean, median, modes, unique hints generated, percent eliminated)\n'
-        top_to_show = min(len(words_scored_list), 25)
+        pretty_str = f"\nGuesses ranked using performance against remaining solutions in {elapsed_time} seconds.\n"
+        pretty_str += 'Top guesses by most unique hints generated:\n(Word, possible solution Y/N, worst-case, best-case, mean, median, modes, unique hints generated)\n'
+        top_to_show = min(len(words_scored_list), 50000)
         rank_count = 1
         for word_data in words_scored_list[0:top_to_show]:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
-        self.info_string.set(pretty_str)
+        # self.info_string.set(pretty_str)
         self.log_string += pretty_str
 
     def new_play_these_letters(self, event):
