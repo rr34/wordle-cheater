@@ -51,7 +51,7 @@ class AppWindow(Tk):
         self.lucas_situation_label = Label(textvariable=self.lucas_situation_letters)
         self.lucas_situation_label.grid(row=3, column=2, ipadx=cell_width, ipady=cell_height)
 
-        self.user_input_label = Label(text='<t> Input text\n<g> Enter guess\n<h> Enter hint\n<a> Enter practice guess\n<s> Enter practice solution word\n<r> Reset all\n<c> Show possible solutions\n<b> Recommend guesses based on unique hints generated\n<l> Show words containing letters entered on the clipboard.\n<Ctrl-x> Close with log file save')
+        self.user_input_label = Label(text='<t> Input text\n<g> Enter guess\n<h> Enter hint\n<a> Enter practice guess\n<s> Enter practice solution word\n<r> Reset all\n<c> Show possible solutions\n<b> Recommend guesses based on unique hints generated\n<v> Show words containing letters entered on the clipboard.\n<Ctrl-x> Close with log file save')
         self.user_input_label.grid(row=10, column=0, columnspan=3, ipadx=cell_width, ipady=cell_height)
 
         self.info_string = StringVar()
@@ -67,7 +67,8 @@ class AppWindow(Tk):
         self.bind('<s>', self.new_practice_solution)
         self.bind('<c>', self.cheat1)
         self.bind('<b>', self.cheat2)
-        self.bind('<l>', self.new_play_these_letters)
+        self.bind('<n>', self.cheat3)
+        self.bind('<v>', self.new_play_these_letters)
         self.bind('<r>', self.reset_variables)
         self.bind('<Control-Key-x>', self.exit_with_logfile)
 
@@ -178,7 +179,7 @@ class AppWindow(Tk):
 
     def cheat2(self, event):
         start_time = perf_counter()
-        words_scored_list = functions.rank_guesses(self.utility_words, self.remaining_words)
+        words_scored_list, guesses_detail = functions.rank_guesses(self.utility_words, self.remaining_words)
         elapsed_time = round(perf_counter() - start_time, 6)
         pretty_str = f"\nGuesses ranked using performance against remaining solutions in {elapsed_time} seconds.\n"
         pretty_str += 'Top guesses by most unique hints generated:\n(Word, possible solution Y/N, worst-case, best-case, mean, median, modes, unique hints generated)\n'
@@ -187,6 +188,19 @@ class AppWindow(Tk):
         for word_data in words_scored_list[0:top_to_show]:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
+        self.info_string.set(pretty_str)
+        self.log_string += pretty_str
+
+    def cheat3(self, event):
+        start_time = perf_counter()
+        words_scored_list, guesses_detail = functions.rank_guesses(self.remaining_words, self.remaining_words, return_detail=True)
+        elapsed_time = round(perf_counter() - start_time, 6)
+        pretty_str = f"\nGuesses detail calculated in {elapsed_time} seconds.\n"
+        pretty_str += 'Guesses with remaining-after-hint groups:\n'
+        for word_data in guesses_detail:
+            pretty_str += f'\n\nIf you guess: {word_data[0]}, these are your possible scenarios:'
+            for i in range(len(word_data[1])):
+                pretty_str += f'\nHint: {word_data[1][i]}, Remaining:\n{str(word_data[2][i])}'
         self.info_string.set(pretty_str)
         self.log_string += pretty_str
 

@@ -156,11 +156,10 @@ def process_hint(guess, hint, words_list_in):
 
     return words_list_out
 
-def rank_guesses(words_list, test_solutions):
-    total_test_count = len(test_solutions)
+def rank_guesses(words_list, test_solutions, return_detail=False):
     count = 0
     guesses_ranked = []
-    start_count = len(test_solutions)
+    guesses_detail = []
     start_time = perf_counter()
     for guess in words_list:
         start_time = perf_counter()
@@ -190,13 +189,16 @@ def rank_guesses(words_list, test_solutions):
         remaining_mode = multimode(remaining_count_list)
         unique_hints = len(hints_list)
         # normalized_score = round(1 - mean(remaining_count_list)/start_count, 3)
-        elapsed_time = round(perf_counter() - start_time, 6)
         count += 1
         countdown = len(words_list) - count
         guess_eval = (guess, guess_is_possible_str, remaining_worst_case, remaining_best_case, remaining_mean, remaining_median, remaining_mode, unique_hints)
         guesses_ranked.append(guess_eval)
+        if return_detail:
+            guess_detail = (guess, hints_list, remaining_after_lists)
+            guesses_detail.append(guess_detail)
+        elapsed_time = round(perf_counter() - start_time, 6)
         print(f"Evaluation time: {elapsed_time}. Guesses remaining to evaluate: {countdown}")
         
     guesses_ranked.sort(key=lambda x: x[-1], reverse=True)
 
-    return guesses_ranked
+    return guesses_ranked, guesses_detail
