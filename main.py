@@ -1,5 +1,5 @@
 from copy import deepcopy
-from tkinter import Tk, StringVar, Label
+from tkinter import Tk, StringVar, Label, Frame, Entry
 from tkinter.simpledialog import askstring
 from time import perf_counter
 import functions
@@ -10,6 +10,38 @@ class AppWindow(Tk):
         #---------------------------------------- App Initialization ------------------------------
         self.title('Wordle Scratchpad by Nate')
         self.state('normal')
+
+        #---------------------------------------- Initialize Frames -------------------------------
+        container = Frame(self)
+        container.grid(row=0, column=0)
+        container.rowconfigure(0, weight=1)
+        container.columnconfigure(0, weight=1)
+
+        self.frames = {}
+
+        for F in (TextInputFrame, WordRecognizeFrame, MainFrame):
+            frame = F(container, self)
+
+            self.frames[F] = frame
+
+            frame.grid(row=0, column=0, sticky='nsew')
+
+        self.show_frame(MainFrame)
+
+    def show_frame(self, frame_name):
+        frame = self.frames[frame_name]
+        frame.tkraise()
+        frame.focus()
+
+    def show_text_input(self, event):
+        self.show_frame(TextInputFrame)
+
+
+class MainFrame(Frame):
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+
+        #---------------------------------------- Initialize --------------------------------------
         self.log_string = ''
         self.section_separator = '\n----------------------------------------------------------------------------------------------------\n'
         start_time = perf_counter()
@@ -60,7 +92,7 @@ class AppWindow(Tk):
         self.info_label.grid(row=11, column=0, columnspan=3, ipadx=cell_width, ipady=cell_height)
 
         #---------------------------------------- Control Keys ------------------------------------
-        self.bind('<t>', self.get_text_input)
+        self.bind('<t>', self.get_text_input2)
         self.bind('<g>', self.new_guess)
         self.bind('<h>', self.new_hint)
         self.bind('<a>', self.new_practice_guess)
@@ -72,7 +104,7 @@ class AppWindow(Tk):
         self.bind('<r>', self.reset_variables)
         self.bind('<Control-Key-x>', self.exit_with_logfile)
 
-    #-------------------------------------------- App Functions -----------------------------------
+    #-------------------------------------------- Main Functions -----------------------------------
     def reset_variables(self, event):
         self.guesses = []
         self.hints = []
@@ -86,6 +118,10 @@ class AppWindow(Tk):
     def get_text_input(self, event):
         input_now = askstring(title='', prompt='Enter text here').upper()
         self.user_input.set(input_now)
+
+    def get_text_input2(self, event):
+        print('Im here right?')
+        controller.show_frame(TextInputFrame)
 
     def new_guess(self, event):
         self.guess_count += 1
@@ -235,6 +271,26 @@ class AppWindow(Tk):
     def exit_with_logfile(self, event):
         self.save_log(self)
         self.destroy()
+
+
+class TextInputFrame(Frame):
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+
+        self.entry_box = Entry(self)
+        self.entry_box.grid(row=0, column=0, sticky='nsew')
+
+        self.bind('Return-Key', self.pass_value)
+
+    def pass_value(self, event):
+        pass
+
+class WordRecognizeFrame(Frame):
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+
+        self.test_label = Label(self)
+        self.test_label.grid(row=0, column=0, ipadx=100, ipady=10)
 
 #------------------------------------------- Procedural --------------------------------------
 if __name__ == '__main__':
