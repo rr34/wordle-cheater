@@ -13,9 +13,31 @@ def word_list_parser1():
 
     return words_list
 
-def word_list_parser2():
+def word_list_parser2(include_collins=False):
     word_length = 5
     text_file_path = './websters-unabridged.txt'
+    with open(text_file_path, 'r') as words_file:
+        whole_dictionary = words_file.read()
+    dictionary_words_list = whole_dictionary.split(sep=None)
+
+    if include_collins:
+        text_file_path = './collins-scrabble.txt'
+        with open(text_file_path, 'r') as words_file:
+            whole_dictionary = words_file.read()
+        dictionary_words_list += whole_dictionary.split(sep=None)
+
+    selected_words_list = []
+    for text_str in dictionary_words_list:
+        if text_str.isalpha() and text_str == text_str.upper() and len(list(text_str)) == word_length:
+            selected_words_list.append(text_str)
+    
+    selected_words_list = set(selected_words_list)
+
+    return selected_words_list
+
+def word_list_parser3():
+    word_length = 5
+    text_file_path = './collins-scrabble.txt'
     with open(text_file_path, 'r') as words_file:
         whole_dictionary = words_file.read()
     dictionary_words_list = whole_dictionary.split(sep=None)

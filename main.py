@@ -15,7 +15,7 @@ class AppWindow(Tk):
         start_time = perf_counter()
         self.all_words_list = functions.word_list_parser2()
         elapsed_time = round(perf_counter() - start_time, 6)
-        pretty_str = f"Parsed Webster's Unabridged Dictionary into 5-letter word list in {elapsed_time} seconds.\n"
+        pretty_str = f"Parsed Webster's Unabridged Dictionary plus Collins Scrabble into 5-letter word list in {elapsed_time} seconds.\n"
         self.log_string += pretty_str
         self.alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
         #---------------------------------------- App Variables -----------------------------------
@@ -69,6 +69,7 @@ class AppWindow(Tk):
         self.bind('<b>', self.cheat2)
         self.bind('<n>', self.cheat3)
         self.bind('<v>', self.new_play_these_letters)
+        self.bind('<l>', self.save_log)
         self.bind('<r>', self.reset_variables)
         self.bind('<Control-Key-x>', self.exit_with_logfile)
 
@@ -196,11 +197,11 @@ class AppWindow(Tk):
         words_scored_list, guesses_detail = functions.rank_guesses(self.remaining_words, self.remaining_words, return_detail=True)
         elapsed_time = round(perf_counter() - start_time, 6)
         pretty_str = f"\nGuesses detail calculated in {elapsed_time} seconds.\n"
-        pretty_str += 'Guesses with remaining-after-hint groups:\n'
+        pretty_str += 'Guesses with remaining-after-hint groups:'
         for word_data in guesses_detail:
-            pretty_str += f'\n\nIf you guess: {word_data[0]}, these are your possible scenarios:'
+            pretty_str += f'\nIf you guess: {word_data[0]}, these are your possible scenarios:\n'
             for i in range(len(word_data[1])):
-                pretty_str += f'\nHint: {word_data[1][i]}, Remaining:\n{str(word_data[2][i])}'
+                pretty_str += f'Hint: {word_data[1][i]}, Remaining:\n{str(word_data[2][i])}\n'
         self.info_string.set(pretty_str)
         self.log_string += pretty_str
 
