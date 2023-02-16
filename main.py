@@ -58,7 +58,7 @@ class MainFrame(Frame):
         self.log_string = ''
         self.section_separator = '\n----------------------------------------------------------------------------------------------------\n'
         start_time = perf_counter()
-        self.all_words_list = functions.word_list_parser2()
+        self.all_words_list = functions.word_list_parser2(include_collins=True)
         elapsed_time = round(perf_counter() - start_time, 6)
         pretty_str = f"Parsed Webster's Unabridged Dictionary plus Collins Scrabble into 5-letter word list in {elapsed_time} seconds.\n"
         self.log_string += pretty_str
