@@ -1,3 +1,4 @@
+from copy import deepcopy
 from time import perf_counter
 from re import finditer, findall
 from math import prod
@@ -115,66 +116,48 @@ def guess_scorer(words_list, letters_freq, scoring_type=False, letters_to_play='
 
     return words_scored_list
 
+def list_duplicates_of(seq,item):
+    start_at = -1
+    locs = []
+    while True:
+        try:
+            loc = seq.index(item,start_at+1)
+        except ValueError:
+            break
+        else:
+            locs.append(loc)
+            start_at = loc
+    return locs
+
 def hint_generator(guess_word, solution_word):
     word_length = 5
     guess_word = list(guess_word)
     solution_word = list(solution_word)
+    # guess_duplicates = set(guess_word) == guess_word
     if len(guess_word) == word_length and len(solution_word) == word_length:
         i = 0
         hint = ['B' for element in range(word_length)]
+        orange_letters = deepcopy(solution_word)
         for i in range(word_length):
             if guess_word[i] == solution_word[i]:
                 hint[i] = 'G'
-            elif guess_word[i] in solution_word:
+                orange_letters.remove(guess_word[i])
+        for i in range(word_length):
+            if hint[i] != 'G' and guess_word[i] in orange_letters:
                 hint[i] = 'O'
+                orange_letters.remove(guess_word[i])
+
         return ''.join(hint)
     else:
         return False
 
 def process_hint(guess, hint, words_list_in):
     words_list_out = []
-    black_letters = []
-    blacks = [i for i, x in enumerate(hint) if x=='B']
-    for i in blacks:
-        if guess[i] not in black_letters:
-            black_letters.append(guess[i])
 
-    orange_letters = []
-    orange_positional = []
-    oranges = [i for i, x in enumerate(hint) if x=='O']
-    for i in oranges:
-        orange_letters.append(guess[i])
-        orange_positional.append((guess[i], i))
-
-    green_positional = []
-    greens = [i for i, x in enumerate(hint) if x=='G']
-    for i in greens:
-        green_positional.append((guess[i], i))
-
-    for word in words_list_in:
-        word_list = list(word)
-        word_passes = True
-
-        if set(word_list) & set(black_letters):
-            word_passes = False
-        if len(orange_letters) != 0 and word_passes:
-            for orange_tuple in orange_positional:
-                if word_list[orange_tuple[1]] == orange_tuple[0] and word_passes:
-                    word_passes = False
-            if word_passes:
-                check_oranges_in = [(i in word_list) for i in orange_letters]
-                if not all(i for i in check_oranges_in):
-                    word_passes = False
-
-        if word_passes:
-            for green_tuple in green_positional:
-                if word_list[green_tuple[1]] != green_tuple[0] and word_passes:
-                    word_passes = False
-
-        if word_passes:
-            words_list_out.append(word)
-
-    # words_list_in = list(set(words_list_in) - set(removed_words_list))
+    for test_solution in words_list_in:
+        test_hint = hint_generator(guess, test_solution)
+        if test_hint == hint:
+            words_list_out.append(test_solution)
 
     return words_list_out
 
