@@ -58,7 +58,7 @@ class MainFrame(Frame):
         self.log_string = ''
         self.section_separator = '\n----------------------------------------------------------------------------------------------------\n'
         start_time = perf_counter()
-        self.all_words_list = functions.word_list_parser2()
+        self.all_words_list = functions.word_list_parser2(include_collins=True)
         elapsed_time = round(perf_counter() - start_time, 6)
         pretty_str = f"Parsed Webster's Unabridged Dictionary plus Collins Scrabble into 5-letter word list in {elapsed_time} seconds.\n"
         self.log_string += pretty_str
@@ -107,15 +107,16 @@ class MainFrame(Frame):
         self.info_label.grid(row=5, column=0, columnspan=3)
 
         #---------------------------------------- Control Keys ------------------------------------
-        self.bind('<t>', self.get_text_input2)
+        self.bind('<t>', self.get_text_input)
         self.bind('<g>', self.new_guess)
         self.bind('<h>', self.new_hint)
         self.bind('<a>', self.new_practice_guess)
         self.bind('<s>', self.new_practice_solution)
         self.bind('<c>', self.cheat1)
-        self.bind('<b>', self.cheat2)
-        self.bind('<n>', self.cheat3)
-        self.bind('<v>', self.new_play_these_letters)
+        self.bind('<v>', self.cheat2)
+        self.bind('<b>', self.cheat3)
+        self.bind('<n>', self.cheat4)
+        self.bind('<p>', self.new_play_these_letters)
         self.bind('<l>', self.save_log)
         self.bind('<r>', self.reset_variables)
         self.bind('<Control-Key-x>', self.exit_with_logfile)
@@ -132,10 +133,6 @@ class MainFrame(Frame):
         self.known_positions = [False for i in range(self.word_length)]
 
     def get_text_input(self, event):
-        input_now = askstring(title='', prompt='Enter text here').upper()
-        self.user_input.set(input_now)
-
-    def get_text_input2(self, event):
         self.controller.show_frame('TextInputFrame')
 
     def new_guess(self, event):
@@ -196,39 +193,36 @@ class MainFrame(Frame):
         elapsed_time = round(perf_counter() - start_time, 6)
         self.log_string += f"\nPossible solutions ranked by sum of each letter [positional frequency + word appearance frequency] (each unique letter single count, so repeat letters don't add) in {elapsed_time} seconds.\n"
         
-        start_time = perf_counter()
-        utility_guesses_scored_list = functions.guess_scorer(self.utility_words, self.letters_freq_list, scoring_type='utility')
-        elapsed_time = round(perf_counter() - start_time, 6)
-        self.log_string += f"Utility guesses ranked by sum of each letter in unknown positions [positional frequency + word appearance frequency]; in known positions [word appearance frequency] in {elapsed_time} seconds.\n"
-        
         pretty_str = 'Top possible solutions:\n(Word, positional frequencies, score)\n'
-        top_to_show = min(len(words_scored_list), 15)
+        top_to_show = min(len(words_scored_list), 25)
         rank_count = 1
         for word_data in words_scored_list[0:top_to_show]:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
-        pretty_str += 'Top utility guesses:\n(Word, positional frequencies, score)\n'
-        top_to_show = min(len(utility_guesses_scored_list), 10)
-        rank_count = 1
-        for word_data in utility_guesses_scored_list[0:top_to_show]:
-            pretty_str += f'{rank_count}. {str(word_data)}\n'
-            rank_count += 1
         self.info_string.set(self.info_string.get() + pretty_str)
 
-        pretty_str = '\nPossible solutions ranked:\n'
+        pretty_str = '\nPossible solutions:\n'
         rank_count = 1
         for word_data in words_scored_list:
-            pretty_str += f'{rank_count}. {str(word_data)}\n'
-            rank_count += 1
-        pretty_str += 'Top utility guesses ranked:\n'
-        rank_count = 1
-        top_to_show = min(len(utility_guesses_scored_list), 25)
-        for word_data in utility_guesses_scored_list[0:top_to_show]:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
         self.log_string += pretty_str + '\n'
 
     def cheat2(self, event):
+        start_time = perf_counter()
+        words_scored_list, guesses_detail = functions.rank_guesses(self.remaining_words, self.remaining_words)
+        elapsed_time = round(perf_counter() - start_time, 6)
+        pretty_str = f"\nPossible solutions ranked using performance against remaining solutions in {elapsed_time} seconds.\n"
+        pretty_str += 'Top possible-solution guesses by most unique hints generated:\n(Word, possible solution Y/N, worst-case, best-case, mean, median, modes, unique hints generated)\n'
+        top_to_show = min(len(words_scored_list), 50)
+        rank_count = 1
+        for word_data in words_scored_list[0:top_to_show]:
+            pretty_str += f'{rank_count}. {str(word_data)}\n'
+            rank_count += 1
+        self.info_string.set(pretty_str)
+        self.log_string += pretty_str
+
+    def cheat3(self, event):
         start_time = perf_counter()
         words_scored_list, guesses_detail = functions.rank_guesses(self.utility_words, self.remaining_words)
         elapsed_time = round(perf_counter() - start_time, 6)
@@ -242,7 +236,7 @@ class MainFrame(Frame):
         self.info_string.set(pretty_str)
         self.log_string += pretty_str
 
-    def cheat3(self, event):
+    def cheat4(self, event):
         start_time = perf_counter()
         words_scored_list, guesses_detail = functions.rank_guesses(self.remaining_words, self.remaining_words, return_detail=True)
         elapsed_time = round(perf_counter() - start_time, 6)
