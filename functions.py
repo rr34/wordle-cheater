@@ -14,7 +14,7 @@ def word_list_parser1():
 
     return words_list
 
-def word_list_parser2(include_collins=False):
+def word_list_parser2(include_collins=True):
     word_length = 5
     text_file_path = './websters-unabridged.txt'
     with open(text_file_path, 'r') as words_file:
@@ -115,19 +115,6 @@ def guess_scorer(words_list, letters_freq, scoring_type=False, letters_to_play='
     words_scored_list.sort(key=lambda x: x[-1], reverse=True)
 
     return words_scored_list
-
-def list_duplicates_of(seq,item):
-    start_at = -1
-    locs = []
-    while True:
-        try:
-            loc = seq.index(item,start_at+1)
-        except ValueError:
-            break
-        else:
-            locs.append(loc)
-            start_at = loc
-    return locs
 
 def hint_generator(guess_word, solution_word):
     word_length = 5
