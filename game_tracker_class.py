@@ -9,9 +9,7 @@ class GameData ():
         self.log_string = ''
         self.alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
         self.word_length = word_length
-        if solution_word == '':
-            self.solution_word = False
-        else:
+        if solution_word:
             self.solution_word = solution_word
         self.section_separator = '\n----------------------------------------------------------------------------------------------------\n'
         start_time = perf_counter()
@@ -62,8 +60,7 @@ class GameData ():
         self.remaining_words = self._process_hint(self.guesses[-1], self.hints[-1], self.remaining_words)
         end_words = len(self.remaining_words)
         elapsed_time = round(perf_counter() - start_time, 6)
-        pretty_str = f'From {start_words} words to {end_words} words in {elapsed_time} seconds.\n'
-        self.log_string += pretty_str
+        self.log_string += f'From {start_words} words to {end_words} words in {elapsed_time} seconds.\n'
 
     def _letter_counter(self):
         total_words = len(self.remaining_words)
@@ -213,7 +210,7 @@ class GameData ():
 
         return guesses_hints_str
 
-    def cheat1(self):
+    def _cheat1(self):
         start_time = perf_counter()
         self._letter_counter()
         elapsed_time = round(perf_counter() - start_time, 6)
@@ -246,7 +243,7 @@ class GameData ():
 
         return pretty_str
 
-    def cheat2(self):
+    def _cheat2(self):
         start_time = perf_counter()
         self.solution_guesses_ranked, guesses_detail = self._rank_guesses(self.remaining_words)
         elapsed_time = round(perf_counter() - start_time, 6)
@@ -260,64 +257,71 @@ class GameData ():
         self.log_string += pretty_str
 
     def cheat2_display(self, top_to_show):
-        top_to_log = min(len(self.solution_guesses_ranked), top_to_show)
+        top_to_show = min(len(self.solution_guesses_ranked), top_to_show)
         pretty_str = 'Top possible-solution guesses by most unique hints generated:\n(Word, possible solution Y/N, worst-case, best-case, mean, median, modes, unique hints generated)\n'
         rank_count = 1
-        for word_data in self.solution_guesses_ranked[0:top_to_log]:
+        for word_data in self.solution_guesses_ranked[0:top_to_show]:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
 
         return pretty_str
 
-    def cheat3(self):
+    def _cheat3(self):
         start_time = perf_counter()
-        words_scored_list, guesses_detail = self._rank_guesses(self.utility_words)
+        self.guesses_unique_hints, guesses_detail = self._rank_guesses(self.utility_words)
         elapsed_time = round(perf_counter() - start_time, 6)
-        pretty_str = f"\nGuesses ranked using performance against remaining solutions in {elapsed_time} seconds.\n"
-        pretty_str += 'Top guesses by most unique hints generated:\n(Word, possible solution Y/N, worst-case, best-case, mean, median, modes, unique hints generated)\n'
-        top_to_show = min(len(words_scored_list), 50)
+        self.log_string += f"\nGuesses ranked using performance against remaining solutions in {elapsed_time} seconds.\n"
+        pretty_str = ''
+        top_to_show = min(len(self.guesses_unique_hints), 50)
         rank_count = 1
-        for word_data in words_scored_list[0:top_to_show]:
+        for word_data in self.guesses_unique_hints[0:top_to_show]:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
-        self.info_string.set(pretty_str)
+        self.log_string += 'Top guesses by most unique hints generated:\n(Word, possible solution Y/N, worst-case, best-case, mean, median, modes, unique hints generated)\n'
         self.log_string += pretty_str
 
-    def cheat4(self, event):
+    def cheat3_display(self, top_to_show):
+        top_to_show = min(len(self.guesses_unique_hints), top_to_show)
+        pretty_str = 'Top guesses by most unique hints generated:\n(Word, possible solution Y/N, worst-case, best-case, mean, median, modes, unique hints generated)\n'
+        rank_count = 1
+        for word_data in self.guesses_unique_hints[0:top_to_show]:
+            pretty_str += f'{rank_count}. {str(word_data)}\n'
+            rank_count += 1
+
+        return pretty_str
+
+    def _cheat4(self):
         start_time = perf_counter()
-        words_scored_list, guesses_detail = functions._rank_guesses(self.remaining_words, self.remaining_words, return_detail=True)
+        words_scored_list, guesses_detail = self._rank_guesses(self.remaining_words, self.remaining_words, return_detail=True)
         elapsed_time = round(perf_counter() - start_time, 6)
-        pretty_str = f"\nGuesses detail calculated in {elapsed_time} seconds.\n"
+        pretty_str = f"\nDetailed scenarios calculated in {elapsed_time} seconds.\n"
         pretty_str += 'Guesses with remaining-after-hint groups:'
         for word_data in guesses_detail:
             pretty_str += f'\nIf you guess: {word_data[0]}, these are your possible scenarios:\n'
             for i in range(len(word_data[1])):
                 pretty_str += f'Hint: {word_data[1][i]}, Remaining:\n{str(word_data[2][i])}\n'
-        self.info_string.set(pretty_str)
+        self.guesses_detail = pretty_str
         self.log_string += pretty_str
 
-    def new_play_these_letters(self, event):
-        self.lucas_situation_letters.set(self.user_input.get())
+    def cheat4_display(self):
+
+        return self.guesses_detail
+    
+    def new_play_these_letters(self, letters_str, top_to_show):
         start_time = perf_counter()
-        play_letters_guesses = functions._guess_scorer(self.utility_words, self.letters_freq_list, scoring_type='play letters', letters_to_play=self.lucas_situation_letters.get())
+        play_letters_guesses = self._guess_scorer(self.utility_words, self.letters_freq_list, scoring_type='play letters', letters_to_play=letters_str)
         elapsed_time = round(perf_counter() - start_time, 6)
-
         self.log_string += f"Guesses with needed letters ranked in {elapsed_time} seconds.\n"
-        pretty_str = f"Top 'play-these-letters' for these letters: {self.lucas_situation_letters.get()}:\n"
-        top_to_show = min(len(play_letters_guesses), 25)
-        rank_count = 1
-        for word_data in play_letters_guesses[0:top_to_show]:
-            pretty_str += f'{rank_count}. {str(word_data)}\n'
-            rank_count += 1
-        self.info_string.set(pretty_str)
 
-        pretty_str = f"Top 'play-these-letters' for these letters: {self.lucas_situation_letters.get()}:\n"
+        pretty_str = f"Top 'play-these-letters' for these letters: {letters_str}:\n"
+        top_to_show = min(len(play_letters_guesses), top_to_show)
         rank_count = 1
-        top_to_show = min(len(play_letters_guesses), 25)
         for word_data in play_letters_guesses[0:top_to_show]:
             pretty_str += f'{rank_count}. {str(word_data)}\n'
             rank_count += 1
-        self.log_string += pretty_str + '\n'
+        self.log_string += pretty_str
+
+        return pretty_str
 
     def save_log(self, event):
         log_filename = self.practice_solution_str.get().lower() + '.txt'
