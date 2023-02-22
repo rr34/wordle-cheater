@@ -1,7 +1,6 @@
 from copy import deepcopy
 from tkinter import *
 from tkinter.ttk import *
-from tkinter.simpledialog import askstring
 from tkinter import font as tkfont
 from time import perf_counter
 import game_tracker_class
@@ -13,16 +12,21 @@ class AppWindow(Tk):
         self.title('Wordle Scratchpad by Nate')
         self.state('normal')
 
-        #---------------------------------------- Initialize Frames -------------------------------
-        self.title_font = tkfont.Font(family='Helvetica', size=20)
+        #---------------------------------------- Frames Container --------------------------------
+        self.prompt_font = tkfont.Font(family='Helvetica', size=20)
         self.container = Frame(self)
         self.container.pack(side='top', fill='both', expand=True)
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
 
+        #---------------------------------------- Controller Variables ----------------------------
+        self.guess_prompt = StringVar()
+        self.guess_prompt.set('guess_prompt initial value')
+
+        #---------------------------------------- Generate Frames ---------------------------------
         self.frames = {}
 
-        for F in (StartFrame, TextInputFrame, WordRecognizeFrame, MainFrame):
+        for F in (StartFrame, GuessEntry):
             page_name = F.__name__
             frame = F(parent=self.container, controller=self)
             frame.pack(side='top', fill='both', expand=True)
@@ -31,6 +35,7 @@ class AppWindow(Tk):
 
         self.current_frame = 'StartFrame'
         self.show_frame('StartFrame')
+
 
     def show_frame(self, page_name):
         for frame in self.frames.values():
@@ -41,8 +46,6 @@ class AppWindow(Tk):
         self.current_frame = page_name
 
         if page_name == 'StartFrame':
-            # frame.entry_box.delete(0,END)
-            # frame.entry_box.insert(0,'')
             frame.start_entry.focus_set()
 
     def start_game(self, user_entry):
@@ -53,14 +56,31 @@ class AppWindow(Tk):
             word_length = int(user_entry)
             solution_word = False
 
-        game_tracker_class.GameData(word_length=word_length, solution_word=solution_word)
+        self.current_game = game_tracker_class.GameData(word_length=word_length, solution_word=solution_word)
+
+        self.enter_guess()
+
+    def enter_guess(self):
+        guess_number = self.current_game.guess_count() + 1
+        guesses_hints_str = self.current_game.guesses_hints_display()
+        prompt_str = guesses_hints_str+ f'Enter guess # {guess_number}'
+        self.guess_prompt.set(prompt_str)
+
+        self.show_frame('GuessEntry')
+        self.frames['GuessEntry'].guess_entry.focus_set()
+
+    def guess_hint_entered(self, result_str):
+        if self.current_game.guess_count() == 1:
+            words_to_cull = self.current_game.remaining_words #TODOnext cull this list
+            print(result_str)
+            print(words_to_cull)
 
 class StartFrame(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
 
-        start_label = Label(self, text='Enter a known solution for hints to be automatically generated\n- OR -\nEnter a number to set the word length and enter hints manually from an external game.', font=controller.title_font)
+        start_label = Label(self, text='Enter a known solution for hints to be automatically generated\n- OR -\nEnter a number to set the word length and enter hints manually from an external game.', font=controller.prompt_font)
         start_label.pack()
         self.start_entry = Entry(self, font=('calibre', 36, 'normal'), justify='center')
         self.start_entry.pack()
@@ -68,33 +88,39 @@ class StartFrame(Frame):
         self.start_entry.bind('<Return>', self.pass_value)
 
     def pass_value(self, event):
-        self.controller.start_game(self.start_entry.get())
+        user_entry = self.start_entry.get().upper()
+        self.controller.start_game(user_entry)
 
-
-class MainFrame(Frame):
+class GuessEntry(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
 
-class TextInputFrame(Frame):
-    def __init__(self, parent, controller):
-        Frame.__init__(self, parent)
-        self.controller = controller
+        prompt_label = Label(self, textvariable=self.controller.guess_prompt, font=self.controller.prompt_font)
+        prompt_label.pack()
 
-        self.entry_box = Entry(self, font=('calibre', 36, 'normal'))
-        self.entry_box.grid(row=0, column=0)
+        self.guess_entry = Entry(self, font=('calibre', 36, 'normal'), justify='center')
+        self.guess_entry.pack()
+        self.guess_entry.bind('<Return>', self.guess_entered)
 
-        self.entry_box.bind('<Return>', self.pass_value)
+        self.hint_entry = Entry(self, font=('calibre', 36, 'normal'), justify='center')
+        self.hint_entry.pack()
+        self.hint_entry.bind('<Return>', self.hint_entered)
 
-    def pass_value(self, event):
-        self.controller.show_frame('MainFrame')
+    def guess_entered(self, event):
+        guess = self.guess_entry.get().upper()
+        hint = self.controller.current_game.new_guess(guess)
+        if hint:
+            self.hint_entry.insert(0, hint)
+            self.hint_entered(event=None)
+        else:
+            self.hint_entry.focus_set()
+    
+    def hint_entered(self, event):
+        hint = self.hint_entry.get().upper()
+        result_str = self.controller.current_game.new_hint(hint)
 
-class WordRecognizeFrame(Frame):
-    def __init__(self, parent, controller):
-        Frame.__init__(self, parent)
-
-        self.test_label = Frame(self)
-        self.test_label.grid(row=0, column=0, ipadx=100, ipady=10)
+        self.controller.guess_hint_entered(result_str)
 
 #------------------------------------------- Procedural --------------------------------------
 if __name__ == '__main__':

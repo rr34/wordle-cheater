@@ -9,20 +9,16 @@ class GameData ():
         self.log_string = ''
         self.alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
         self.word_length = word_length
-        if solution_word:
-            self.solution_word = solution_word
+        self.solution_word = solution_word
         self.section_separator = '\n----------------------------------------------------------------------------------------------------\n'
         start_time = perf_counter()
         self._parse_words()
         elapsed_time = round(perf_counter() - start_time, 6)
-        pretty_str = f"Parsed Webster's Unabridged Dictionary plus Collins Scrabble into {self.word_length}-letter word list in {elapsed_time} seconds.\n"
-        self.log_string += pretty_str
+        self.log_string += f"Parsed Webster's Unabridged Dictionary plus Collins Scrabble into {self.word_length}-letter word list in {elapsed_time} seconds.\n"
         self.guesses = []
         self.hints = []
         self.remaining_words = deepcopy(self.all_words_set)
         self.utility_words = deepcopy(self.all_words_set)
-        self.guess_count = 0
-        self.hint_count = 0
 
     def _parse_words(self, include_collins=True):
         text_file_path = './websters-unabridged.txt'
@@ -43,15 +39,20 @@ class GameData ():
         
         self.all_words_set = set(selected_words_list)
 
-    def new_guess(self, new_guess):
-        self.guesses.append(new_guess)
+    def guess_count(self):
+        return len(self.guesses)
+
+    def new_guess(self, guess):
+        self.guesses.append(guess)
 
         if self.solution_word:
-            new_hint = self._hint_generator(new_guess, self.solution_word)
-            self.new_hint(new_hint)
+            new_hint = self._hint_generator(guess, self.solution_word)
+            return new_hint
+        else:
+            return False
 
-    def new_hint(self, new_hint):
-        self.hints.append(new_hint)
+    def new_hint(self, hint):
+        self.hints.append(hint)
         self.log_string += self.section_separator
         self.log_string += f'{self.guesses[-1]}: guess #{len(self.guesses)}\n'
         self.log_string += f'{self.hints[-1]}: hint #{len(self.hints)}\n'
@@ -60,7 +61,19 @@ class GameData ():
         self.remaining_words = self._process_hint(self.guesses[-1], self.hints[-1], self.remaining_words)
         end_words = len(self.remaining_words)
         elapsed_time = round(perf_counter() - start_time, 6)
-        self.log_string += f'From {start_words} words to {end_words} words in {elapsed_time} seconds.\n'
+        pretty_str = f'From {start_words} words to {end_words} words in {elapsed_time} seconds.\n'
+        self.log_string += pretty_str
+
+        return pretty_str
+
+    def guesses_hints_display(self):
+        if len(self.hints) < 1:
+            return 'No guesses yet.\n'
+        elif len(self.hints) >= 1:
+            pretty_str = ''
+            for i in range(len(self.hints)):
+                pretty_str += f'{self.guesses[i]}: guess #{i+1}\n{self.hints[i]}: hint #{i+1}\n'
+            return pretty_str
 
     def _letter_counter(self):
         total_words = len(self.remaining_words)
