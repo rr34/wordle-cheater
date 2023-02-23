@@ -26,7 +26,7 @@ class AppWindow(Tk):
         #---------------------------------------- Generate Frames ---------------------------------
         self.frames = {}
 
-        for F in (StartFrame, GuessEntry):
+        for F in (StartFrame, GuessEntry, CullSolutions):
             page_name = F.__name__
             frame = F(parent=self.container, controller=self)
             frame.pack(side='top', fill='both', expand=True)
@@ -61,7 +61,7 @@ class AppWindow(Tk):
         self.enter_guess()
 
     def enter_guess(self):
-        guess_number = self.current_game.guess_count() + 1
+        guess_number = self.current_game.guess_count + 1
         guesses_hints_str = self.current_game.guesses_hints_display()
         prompt_str = guesses_hints_str+ f'Enter guess # {guess_number}'
         self.guess_prompt.set(prompt_str)
@@ -70,10 +70,14 @@ class AppWindow(Tk):
         self.frames['GuessEntry'].guess_entry.focus_set()
 
     def guess_hint_entered(self, result_str):
-        if self.current_game.guess_count() == 1:
-            words_to_cull = self.current_game.remaining_words #TODOnext cull this list
+        if self.current_game.guess_count == 1:
+            for word in self.current_game.remaining_words:
+                self.frames['CullSolutions'].unmarked_listbox.insert(END, word)
+            self.frames['CullSolutions'].unmarked_listbox.configure(height=50)
+            
+            self.show_frame('CullSolutions')
+            self.frames['CullSolutions'].unmarked_listbox.focus_set()
             print(result_str)
-            print(words_to_cull)
 
 class StartFrame(Frame):
     def __init__(self, parent, controller):
@@ -121,6 +125,89 @@ class GuessEntry(Frame):
         result_str = self.controller.current_game.new_hint(hint)
 
         self.controller.guess_hint_entered(result_str)
+
+class CullSolutions(Frame):
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        self.controller = controller
+
+        self.marked_obscure_listbox_label = Label(self, text='<O> Obscure words:')
+        self.marked_obscure_listbox_label.grid(row=0, column=0)
+        self.marked_obscure_listbox = Listbox(self, selectmode='multiple', height=50)
+        self.marked_obscure_listbox.grid(row=1, column=0)
+
+        self.unmarked_listbox_label = Label(self, text='<U> Unmarked words:')
+        self.unmarked_listbox_label.grid(row=0, column=1)
+        self.unmarked_listbox = Listbox(self, selectmode='multiple', height=50)
+        self.unmarked_listbox.grid(row=1, column=1)
+
+        self.marked_human_listbox_label = Label(self, text='<H> Human words:')
+        self.marked_human_listbox_label.grid(row=0, column=2)
+        self.marked_human_listbox = Listbox(self, selectmode='multiple', height=50)
+        self.marked_human_listbox.grid(row=1, column=2)
+
+        self.bind_all('<o>', self.mark_obscure)
+        self.bind_all('<h>', self.mark_human)
+        self.bind_all('<u>', self.unmark)
+        self.bind_all('<a>', self.obscure_the_rest)
+
+    def mark_obscure(self, event):
+        selection = self.unmarked_listbox.curselection()
+        for index in selection:
+            self.marked_obscure_listbox.insert(END, self.unmarked_listbox.get(index))
+        for index in selection[::-1]:
+            self.unmarked_listbox.delete(index)
+
+        selection = self.marked_human_listbox.curselection()
+        for index in selection:
+            self.marked_obscure_listbox.insert(END, self.marked_human_listbox.get(index))
+        for index in selection[::-1]:
+            self.marked_human_listbox.delete(index)
+
+        self.unmarked_listbox.select_clear(0, END)
+        self.marked_human_listbox.select_clear(0, END)
+
+    def unmark(self, event):
+        selection = self.marked_obscure_listbox.curselection()
+        for index in selection:
+            self.unmarked_listbox.insert(END, self.marked_obscure_listbox.get(index))
+        for index in selection[::-1]:
+            self.marked_obscure_listbox.delete(index)
+
+        selection = self.marked_human_listbox.curselection()
+        for index in selection:
+            self.unmarked_listbox.insert(END, self.marked_human_listbox.get(index))
+        for index in selection[::-1]:
+            self.marked_human_listbox.delete(index)
+
+        self.marked_obscure_listbox.select_clear(0, END)
+        self.marked_human_listbox.select_clear(0, END)
+
+    def mark_human(self, event):
+        selection = self.marked_obscure_listbox.curselection()
+        for index in selection:
+            self.marked_human_listbox.insert(END, self.marked_obscure_listbox.get(index))
+        for index in selection[::-1]:
+            self.marked_obscure_listbox.delete(index)
+
+        selection = self.unmarked_listbox.curselection()
+        for index in selection:
+            self.marked_human_listbox.insert(END, self.unmarked_listbox.get(index))
+        for index in selection[::-1]:
+            self.unmarked_listbox.delete(index)
+
+        self.marked_obscure_listbox.select_clear(0, END)
+        self.unmarked_listbox.select_clear(0, END)
+
+    def obscure_the_rest(self, event):
+        for word in self.unmarked_listbox.get(0, END):
+            self.marked_obscure_listbox.insert(END, word)
+
+        self.unmarked_listbox.delete(0, END)
+
+        self.marked_obscure_listbox.select_clear(0, END)
+        self.unmarked_listbox.select_clear(0, END)
+
 
 #------------------------------------------- Procedural --------------------------------------
 if __name__ == '__main__':

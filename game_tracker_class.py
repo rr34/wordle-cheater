@@ -10,6 +10,7 @@ class GameData ():
         self.alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
         self.word_length = word_length
         self.solution_word = solution_word
+        self.guess_count = 0
         self.section_separator = '\n----------------------------------------------------------------------------------------------------\n'
         start_time = perf_counter()
         self._parse_words()
@@ -39,11 +40,9 @@ class GameData ():
         
         self.all_words_set = set(selected_words_list)
 
-    def guess_count(self):
-        return len(self.guesses)
-
     def new_guess(self, guess):
         self.guesses.append(guess)
+        self.guess_count = len(self.guesses)
 
         if self.solution_word:
             new_hint = self._hint_generator(guess, self.solution_word)
