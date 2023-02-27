@@ -3,7 +3,7 @@ from tkinter import *
 from tkinter.ttk import *
 from tkinter import font as tkfont
 from time import perf_counter
-import game_tracker_class
+import models
 
 class AppWindow(Tk):
     def __init__(self):
@@ -56,7 +56,7 @@ class AppWindow(Tk):
             word_length = int(user_entry)
             solution_word = False
 
-        self.current_game = game_tracker_class.GameData(word_length=word_length, solution_word=solution_word)
+        self.current_game = models.GameData(word_length=word_length, solution_word=solution_word)
 
         self.enter_guess()
 
@@ -78,6 +78,13 @@ class AppWindow(Tk):
             self.show_frame('CullSolutions')
             self.frames['CullSolutions'].unmarked_listbox.focus_set()
             print(result_str)
+
+    def receive_user_words(self, event):
+        obscure_list = list(self.frames['CullSolutions'].marked_obscure_listbox.get(0, END))
+        unmarked = list(self.frames['CullSolutions'].unmarked_listbox.get(0, END))
+        human_list = list(self.frames['CullSolutions'].marked_human_listbox.get(0, END))
+        self.current_game.store_user_selections(obscure_list, human_list, unmarked)
+
 
 class StartFrame(Frame):
     def __init__(self, parent, controller):
@@ -146,10 +153,13 @@ class CullSolutions(Frame):
         self.marked_human_listbox = Listbox(self, selectmode='multiple', height=50)
         self.marked_human_listbox.grid(row=1, column=2)
 
-        self.bind_all('<o>', self.mark_obscure)
-        self.bind_all('<h>', self.mark_human)
-        self.bind_all('<u>', self.unmark)
-        self.bind_all('<a>', self.obscure_the_rest)
+        widgets = (self.marked_obscure_listbox, self.unmarked_listbox, self.marked_human_listbox)
+        for each_widget in widgets:
+            each_widget.bind('<o>', self.mark_obscure)
+            each_widget.bind('<h>', self.mark_human)
+            each_widget.bind('<u>', self.unmark)
+            each_widget.bind('<a>', self.obscure_the_rest)
+            each_widget.bind('<Return>', self.controller.receive_user_words)
 
     def mark_obscure(self, event):
         selection = self.unmarked_listbox.curselection()
@@ -206,7 +216,7 @@ class CullSolutions(Frame):
         self.unmarked_listbox.delete(0, END)
 
         self.marked_obscure_listbox.select_clear(0, END)
-        self.unmarked_listbox.select_clear(0, END)
+        self.unmarked_listbox.select_clear(0, END)        
 
 
 #------------------------------------------- Procedural --------------------------------------

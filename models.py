@@ -3,6 +3,7 @@ from time import perf_counter
 from re import finditer, findall
 from math import prod
 from statistics import mean, median, multimode
+import os, configparser
 
 class GameData ():
     def __init__(self, word_length, solution_word) -> None:
@@ -344,3 +345,23 @@ class GameData ():
         self.save_log(self)
         self.controller.destroy()
 
+    def _sort_obscure_human(self):
+        pass #do this first assuming the user has entered selections in the past
+
+    def store_user_selections(self, obscure, human, unmarked):
+        words_config_parser = configparser.ConfigParser()
+        section_name = f'{self.word_length}-letter words'
+
+        if not os.path.exists('words_config.ini'):
+            words_config_parser[section_name] = {'obscure words': obscure, 'human words': human}
+            words_config_parser.write(open('words_config.ini', 'w'))
+        else:
+            words_config_parser.read('words_config.ini')
+            try:
+                words_config_parser[section_name]
+            except:
+                words_config_parser[section_name] = {'obscure words': obscure, 'human words': human}
+            else:
+                already_obscure = words_config_parser[section_name]['obscure words']
+                already_human = words_config_parser[section_name]['human words']
+            print(already_human)
