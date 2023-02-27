@@ -66,6 +66,33 @@ class GameData ():
 
         return pretty_str
 
+    def sort_obscure_human(self):
+        words_config_parser = configparser.ConfigParser()
+        section_name = f'{self.word_length}-letter words'
+
+        if not os.path.exists('words_config.ini'):
+            words_config_parser[section_name] = {'obscure words': set(), 'human words': set()}
+            words_config_parser.write(open('words_config.ini', 'w'))
+        else:
+            words_config_parser.read('words_config.ini')
+            try:
+                words_config_parser[section_name]
+            except:
+                marked_obscure = set()
+                marked_human = set()
+                words_config_parser[section_name] = {'obscure words': marked_obscure, 'human words': marked_human}
+            else:
+                marked_obscure = words_config_parser[section_name]['obscure words']
+                marked_human = words_config_parser[section_name]['human words']
+
+            self.remaining_human = self.remaining_words - marked_obscure
+            unmarked = self.remaining_human - marked_human
+            
+            if len(unmarked) == 0:
+                return False
+            else:
+                return unmarked
+
     def guesses_hints_display(self):
         if len(self.hints) < 1:
             return 'No guesses yet.\n'
@@ -345,23 +372,17 @@ class GameData ():
         self.save_log(self)
         self.controller.destroy()
 
-    def _sort_obscure_human(self):
-        pass #do this first assuming the user has entered selections in the past
-
     def store_user_selections(self, obscure, human, unmarked):
         words_config_parser = configparser.ConfigParser()
         section_name = f'{self.word_length}-letter words'
 
-        if not os.path.exists('words_config.ini'):
-            words_config_parser[section_name] = {'obscure words': obscure, 'human words': human}
-            words_config_parser.write(open('words_config.ini', 'w'))
-        else:
-            words_config_parser.read('words_config.ini')
-            try:
-                words_config_parser[section_name]
-            except:
-                words_config_parser[section_name] = {'obscure words': obscure, 'human words': human}
-            else:
-                already_obscure = words_config_parser[section_name]['obscure words']
-                already_human = words_config_parser[section_name]['human words']
-            print(already_human)
+        words_config_parser.read('words_config.ini')
+
+        already_obscure = words_config_parser[section_name]['obscure words']
+        already_human = words_config_parser[section_name]['human words']
+
+        all_obscure = already_obscure + obscure
+        all_human = already_human + human
+
+        words_config_parser #TODOnext
+        print(already_human)
