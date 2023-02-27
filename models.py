@@ -71,7 +71,9 @@ class GameData ():
         section_name = f'{self.word_length}-letter words'
 
         if not os.path.exists('words_config.ini'):
-            words_config_parser[section_name] = {'obscure words': set(), 'human words': set()}
+            marked_obscure = set()
+            marked_human = set()
+            words_config_parser[section_name] = {'obscure words': json.dumps(list(marked_obscure)), 'human words': json.dumps(list(marked_human))}
             words_config_parser.write(open('words_config.ini', 'w'))
         else:
             words_config_parser.read('words_config.ini')
@@ -80,18 +82,18 @@ class GameData ():
             except:
                 marked_obscure = set()
                 marked_human = set()
-                words_config_parser[section_name] = {'obscure words': json.dumps(marked_obscure), 'human words': json.dumps(marked_human)}
+                words_config_parser[section_name] = {'obscure words': json.dumps(list(marked_obscure)), 'human words': json.dumps(list(marked_human))}
             else:
-                marked_obscure = json.loads(words_config_parser[section_name]['obscure words'])
-                marked_human = json.loads(words_config_parser[section_name]['human words'])
+                marked_obscure = set(json.loads(words_config_parser[section_name]['obscure words']))
+                marked_human = set(json.loads(words_config_parser[section_name]['human words']))
 
-            self.remaining_human = self.remaining_words - marked_obscure
-            unmarked = self.remaining_human - marked_human
+        self.remaining_words = self.remaining_words - marked_obscure
+        unmarked = self.remaining_words - marked_human
             
-            if len(unmarked) == 0:
-                return False
-            else:
-                return unmarked
+        if len(unmarked) == 0:
+            return False
+        else:
+            return unmarked
 
     def guesses_hints_display(self):
         if len(self.hints) < 1:
@@ -193,6 +195,7 @@ class GameData ():
 
     def _rank_guesses(self, guesses_considered, return_detail=False):
         count = 0
+        count_end = len(guesses_considered)
         guesses_ranked = []
         guesses_detail = []
         start_time = perf_counter()
@@ -225,7 +228,7 @@ class GameData ():
             unique_hints = len(hints_list)
             # normalized_score = round(1 - mean(remaining_count_list)/start_count, 3)
             count += 1
-            countdown = len(self.utility_words) - count
+            countdown = count_end - count
             guess_eval = (guess, guess_is_possible_str, remaining_worst_case, remaining_best_case, remaining_mean, remaining_median, remaining_mode, unique_hints)
             guesses_ranked.append(guess_eval)
             if return_detail:
@@ -254,7 +257,8 @@ class GameData ():
         self._cheat1()
         self._cheat2()
         self._cheat3()
-        self._cheat4()
+        if len(self.remaining_words) <=12:
+            self._cheat4()
 
     def _cheat1(self):
         start_time = perf_counter()
@@ -338,7 +342,7 @@ class GameData ():
 
     def _cheat4(self):
         start_time = perf_counter()
-        words_scored_list, guesses_detail = self._rank_guesses(self.remaining_words, self.remaining_words, return_detail=True)
+        words_scored_list, guesses_detail = self._rank_guesses(self.remaining_words, return_detail=True)
         elapsed_time = round(perf_counter() - start_time, 6)
         pretty_str = f"\nDetailed scenarios calculated in {elapsed_time} seconds.\n"
         pretty_str += 'Guesses with remaining-after-hint groups:'
@@ -384,13 +388,13 @@ class GameData ():
 
         words_config_parser.read('words_config.ini')
 
-        already_obscure = json.loads(words_config_parser[section_name]['obscure words'])
-        already_human = json.loads(words_config_parser[section_name]['human words'])
+        already_obscure = set(json.loads(words_config_parser[section_name]['obscure words']))
+        already_human = set(json.loads(words_config_parser[section_name]['human words']))
 
-        all_obscure = already_obscure + obscure
-        all_human = already_human + human
-        words_config_parser[section_name]['obscure words'] = json.dumps(all_obscure)
-        words_config_parser[section_name]['human words'] = json.dumps(all_human)
+        all_obscure = already_obscure | obscure
+        all_human = already_human | human
+        words_config_parser[section_name]['obscure words'] = json.dumps(list(all_obscure))
+        words_config_parser[section_name]['human words'] = json.dumps(list(all_human))
 
         with open('words_config.ini', 'w') as words_config_file:
             words_config_parser.write(words_config_file)

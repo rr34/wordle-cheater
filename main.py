@@ -14,6 +14,7 @@ class AppWindow(Tk):
 
         #---------------------------------------- Frames Container --------------------------------
         self.prompt_font = tkfont.Font(family='Helvetica', size=20)
+        self.small_font = tkfont.Font(family='Helvetica', size=12)
         self.container = Frame(self)
         self.container.pack(side='top', fill='both', expand=True)
         self.container.grid_rowconfigure(0, weight=1)
@@ -66,15 +67,17 @@ class AppWindow(Tk):
 
         self.current_game = models.GameData(word_length=word_length, solution_word=solution_word)
 
-        self.enter_guess()
+        self.enter_guess(event=None)
 
-    def enter_guess(self):
+    def enter_guess(self, event):
         guess_number = self.current_game.guess_count + 1
         guesses_hints_str = self.current_game.guesses_hints_display()
         prompt_str = guesses_hints_str+ f'Enter guess # {guess_number}'
         self.guess_prompt.set(prompt_str)
 
         self.show_frame('GuessHintEntry')
+        self.frames['GuessHintEntry'].guess_entry.delete(0, END)
+        self.frames['GuessHintEntry'].hint_entry.delete(0, END)
         self.frames['GuessHintEntry'].guess_entry.focus_set()
 
     def hint_entered(self, event):
@@ -96,19 +99,39 @@ class AppWindow(Tk):
         self.frames['CullSolutions'].unmarked_listbox.focus_set()
 
     def cull_receive(self, event):
-        obscure_list = list(self.frames['CullSolutions'].marked_obscure_listbox.get(0, END))
-        unmarked = list(self.frames['CullSolutions'].unmarked_listbox.get(0, END))
-        human_list = list(self.frames['CullSolutions'].marked_human_listbox.get(0, END))
+        obscure_list = set(self.frames['CullSolutions'].marked_obscure_listbox.get(0, END))
+        unmarked = set(self.frames['CullSolutions'].unmarked_listbox.get(0, END))
+        human_list = set(self.frames['CullSolutions'].marked_human_listbox.get(0, END))
         self.current_game.store_user_selections(obscure_list, human_list, unmarked)
         self.hint_entered(event=None)
 
     def generate_show_results(self):
         self.current_game.prepare_cheats()
-        self.cheat1_str = self.current_game.cheat1_display(top_to_show=25)
-        self.cheat2_str = self.current_game.cheat2_display(top_to_show=25)
-        self.cheat3_str = self.current_game.cheat3_display(top_to_show=25)
-        self.cheat4_str = self.current_game.cheat4_display(top_to_show=25)
+        self.cheat1_str.set(self.current_game.cheat1_display(top_to_show=25))
+        self.cheat2_str.set(self.current_game.cheat2_display(top_to_show=25))
+        self.cheat3_str.set(self.current_game.cheat3_display(top_to_show=25))
+        if len(self.current_game.remaining_words) <= 12:
+            self.cheat4_str.set(self.current_game.cheat4_display())
         self.show_frame('Cheat1')
+        solutions_frames = ('Cheat1', 'Cheat2', 'Cheat3', 'Cheat4')
+        for solution_frame in solutions_frames:
+            self.frames[solution_frame].bind('<Key-1>', self.show_one)
+            self.frames[solution_frame].bind('<Key-2>', self.show_two)
+            self.frames[solution_frame].bind('<Key-3>', self.show_three)
+            self.frames[solution_frame].bind('<Key-4>', self.show_four)
+            self.frames[solution_frame].bind('<g>', self.enter_guess)
+
+    def show_one(self, event):
+        self.show_frame('Cheat1')
+
+    def show_two(self, event):
+        self.show_frame('Cheat2')
+
+    def show_three(self, event):
+        self.show_frame('Cheat3')
+
+    def show_four(self, event):
+        self.show_frame('Cheat4')
 
 class StartFrame(Frame):
     def __init__(self, parent, controller):
@@ -241,7 +264,7 @@ class Cheat1(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
 
-        cheat_label = Label(self, textvariable=self.controller.cheat1_str, font=controller.prompt_font)
+        cheat_label = Label(self, textvariable=self.controller.cheat1_str, font=controller.small_font)
         cheat_label.pack()
 
 class Cheat2(Frame):
@@ -249,7 +272,7 @@ class Cheat2(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
 
-        cheat_label = Label(self, textvariable=self.controller.cheat2_str, font=controller.prompt_font)
+        cheat_label = Label(self, textvariable=self.controller.cheat2_str, font=controller.small_font)
         cheat_label.pack()
 
 class Cheat3(Frame):
@@ -257,7 +280,7 @@ class Cheat3(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
 
-        cheat_label = Label(self, textvariable=self.controller.cheat3_str, font=controller.prompt_font)
+        cheat_label = Label(self, textvariable=self.controller.cheat3_str, font=controller.small_font)
         cheat_label.pack()
 
 class Cheat4(Frame):
@@ -265,7 +288,7 @@ class Cheat4(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
 
-        cheat_label = Label(self, textvariable=self.controller.cheat4_str, font=controller.prompt_font)
+        cheat_label = Label(self, textvariable=self.controller.cheat4_str, font=controller.small_font)
         cheat_label.pack()
 
 
