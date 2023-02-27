@@ -3,7 +3,7 @@ from time import perf_counter
 from re import finditer, findall
 from math import prod
 from statistics import mean, median, multimode
-import os, configparser
+import os, configparser, json
 
 class GameData ():
     def __init__(self, word_length, solution_word) -> None:
@@ -80,10 +80,10 @@ class GameData ():
             except:
                 marked_obscure = set()
                 marked_human = set()
-                words_config_parser[section_name] = {'obscure words': marked_obscure, 'human words': marked_human}
+                words_config_parser[section_name] = {'obscure words': json.dumps(marked_obscure), 'human words': json.dumps(marked_human)}
             else:
-                marked_obscure = words_config_parser[section_name]['obscure words']
-                marked_human = words_config_parser[section_name]['human words']
+                marked_obscure = json.loads(words_config_parser[section_name]['obscure words'])
+                marked_human = json.loads(words_config_parser[section_name]['human words'])
 
             self.remaining_human = self.remaining_words - marked_obscure
             unmarked = self.remaining_human - marked_human
@@ -182,12 +182,12 @@ class GameData ():
             return False
 
     def _process_hint(self, guess, hint, words_list_in):
-        words_list_out = []
+        words_list_out = set()
 
         for test_solution in words_list_in:
             test_hint = self._hint_generator(guess, test_solution)
             if test_hint == hint:
-                words_list_out.append(test_solution)
+                words_list_out.add(test_solution)
 
         return words_list_out
 
@@ -249,6 +249,12 @@ class GameData ():
                 guesses_hints_str += f'{self.hints[i]}: hint #{i+1}\n'
 
         return guesses_hints_str
+    
+    def prepare_cheats(self):
+        self._cheat1()
+        self._cheat2()
+        self._cheat3()
+        self._cheat4()
 
     def _cheat1(self):
         start_time = perf_counter()
@@ -378,11 +384,13 @@ class GameData ():
 
         words_config_parser.read('words_config.ini')
 
-        already_obscure = words_config_parser[section_name]['obscure words']
-        already_human = words_config_parser[section_name]['human words']
+        already_obscure = json.loads(words_config_parser[section_name]['obscure words'])
+        already_human = json.loads(words_config_parser[section_name]['human words'])
 
         all_obscure = already_obscure + obscure
         all_human = already_human + human
+        words_config_parser[section_name]['obscure words'] = json.dumps(all_obscure)
+        words_config_parser[section_name]['human words'] = json.dumps(all_human)
 
-        words_config_parser #TODOnext
-        print(already_human)
+        with open('words_config.ini', 'w') as words_config_file:
+            words_config_parser.write(words_config_file)
