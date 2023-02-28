@@ -6,7 +6,8 @@ from statistics import mean, median, multimode
 import os, configparser, json
 
 class GameData ():
-    def __init__(self, word_length, solution_word) -> None:
+    def __init__(self, word_length, solution_word, log_filename) -> None:
+        self.log_filename = log_filename + '.txt'
         self.log_string = ''
         self.alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
         self.word_length = word_length
@@ -396,3 +397,6 @@ class GameData ():
 
         with open('words_config.ini', 'w') as words_config_file:
             words_config_parser.write(words_config_file)
+    def save_log_file(self):
+        with open(self.log_filename, 'w') as log_file:
+            log_file.write(self.log_string)

@@ -45,6 +45,7 @@ class AppWindow(Tk):
         self.current_frame = 'StartFrame'
         self.show_frame('StartFrame')
 
+        self.bind_all('<Control-Key-x>', self.save_and_exit)
 
     def show_frame(self, page_name):
         for frame in self.frames.values():
@@ -55,9 +56,9 @@ class AppWindow(Tk):
         self.current_frame = page_name
 
         if page_name == 'StartFrame':
-            frame.start_entry.focus_set()
+            frame.log_filename_entry.focus_set()
 
-    def start_game(self, user_entry):
+    def start_game(self, log_filename, user_entry):
         if user_entry.isalpha():
             word_length = len(user_entry)
             solution_word = user_entry.upper()
@@ -65,7 +66,7 @@ class AppWindow(Tk):
             word_length = int(user_entry)
             solution_word = False
 
-        self.current_game = models.GameData(word_length=word_length, solution_word=solution_word)
+        self.current_game = models.GameData(word_length=word_length, solution_word=solution_word, log_filename=log_filename)
 
         self.enter_guess(event=None)
 
@@ -133,10 +134,20 @@ class AppWindow(Tk):
     def show_four(self, event):
         self.show_frame('Cheat4')
 
+    def save_and_exit(self, event):
+        self.current_game.save_log_file()
+        self.destroy()
+
 class StartFrame(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
+
+        logfile_label = Label(self, text='Enter a log filename:', font=controller.prompt_font)
+        logfile_label.pack()
+        self.log_filename_entry = Entry(self, font=('calibre', 36, 'normal'), justify='center')
+        self.log_filename_entry.pack()
+        self.log_filename_entry.bind('<Return>', self.next_field)
 
         start_label = Label(self, text='Enter a known solution for hints to be automatically generated\n- OR -\nEnter a number to set the word length and enter hints manually from an external game.', font=controller.prompt_font)
         start_label.pack()
@@ -145,9 +156,13 @@ class StartFrame(Frame):
 
         self.start_entry.bind('<Return>', self.pass_value)
 
+    def next_field(self, event):
+        self.start_entry.focus_set()
+
     def pass_value(self, event):
+        log_filename = self.log_filename_entry.get()
         user_entry = self.start_entry.get().upper()
-        self.controller.start_game(user_entry)
+        self.controller.start_game(log_filename, user_entry)
 
 class GuessHintEntry(Frame):
     def __init__(self, parent, controller):
