@@ -23,6 +23,12 @@ class AppWindow(Tk):
         #---------------------------------------- Controller Variables ----------------------------
         self.guess_prompt = StringVar()
         self.guess_prompt.set('guess_prompt initial value')
+        self.CullSolutions_obscurecount = StringVar()
+        self.CullSolutions_obscurecount.set(f'<O> Obscure words: {0}')
+        self.CullSolutions_unmarkedcount = StringVar()
+        self.CullSolutions_unmarkedcount.set(f'<U> Unmarked words: {0}')
+        self.CullSolutions_humancount = StringVar()
+        self.CullSolutions_humancount.set(f'<H> Human words: {0}')
         self.cheat1_str = StringVar()
         self.cheat1_str.set('cheat 1 initial value')
         self.cheat2_str = StringVar()
@@ -30,7 +36,7 @@ class AppWindow(Tk):
         self.cheat3_str = StringVar()
         self.cheat3_str.set('cheat 3 initial value')
         self.cheat4_str = StringVar()
-        self.cheat4_str.set('cheat 4 initial value')
+        self.cheat4_str.set('Shows possible scenario details with less than 12 remaining words.')
 
         #---------------------------------------- Generate Frames ---------------------------------
         self.frames = {}
@@ -95,7 +101,10 @@ class AppWindow(Tk):
     def cull_solutions_init(self, unmarked):
         for word in unmarked:
             self.frames['CullSolutions'].unmarked_listbox.insert(END, word)
-            
+
+        unmarkedcount = len(self.frames['CullSolutions'].unmarked_listbox.get(0, END))
+        self.CullSolutions_unmarkedcount.set(f'<U> Unmarked words: {unmarkedcount}')
+
         self.show_frame('CullSolutions')
         self.frames['CullSolutions'].unmarked_listbox.focus_set()
 
@@ -194,19 +203,19 @@ class CullSolutions(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
 
-        self.marked_obscure_listbox_label = Label(self, text='<O> Obscure words:')
+        self.marked_obscure_listbox_label = Label(self, textvariable=self.controller.CullSolutions_obscurecount)
         self.marked_obscure_listbox_label.grid(row=0, column=0)
-        self.marked_obscure_listbox = Listbox(self, selectmode='multiple', height=50)
+        self.marked_obscure_listbox = Listbox(self, selectmode='multiple', height=25, font=self.controller.small_font)
         self.marked_obscure_listbox.grid(row=1, column=0)
 
-        self.unmarked_listbox_label = Label(self, text='<U> Unmarked words:')
+        self.unmarked_listbox_label = Label(self, textvariable=self.controller.CullSolutions_unmarkedcount)
         self.unmarked_listbox_label.grid(row=0, column=1)
-        self.unmarked_listbox = Listbox(self, selectmode='multiple', height=50)
+        self.unmarked_listbox = Listbox(self, selectmode='multiple', height=25, font=self.controller.small_font)
         self.unmarked_listbox.grid(row=1, column=1)
 
-        self.marked_human_listbox_label = Label(self, text='<H> Human words:')
+        self.marked_human_listbox_label = Label(self, textvariable=self.controller.CullSolutions_humancount)
         self.marked_human_listbox_label.grid(row=0, column=2)
-        self.marked_human_listbox = Listbox(self, selectmode='multiple', height=50)
+        self.marked_human_listbox = Listbox(self, selectmode='multiple', height=25, font=self.controller.small_font)
         self.marked_human_listbox.grid(row=1, column=2)
 
         widgets = (self.marked_obscure_listbox, self.unmarked_listbox, self.marked_human_listbox)
@@ -232,6 +241,7 @@ class CullSolutions(Frame):
 
         self.unmarked_listbox.select_clear(0, END)
         self.marked_human_listbox.select_clear(0, END)
+        self.set_counts()
 
     def unmark(self, event):
         selection = self.marked_obscure_listbox.curselection()
@@ -248,6 +258,7 @@ class CullSolutions(Frame):
 
         self.marked_obscure_listbox.select_clear(0, END)
         self.marked_human_listbox.select_clear(0, END)
+        self.set_counts()
 
     def mark_human(self, event):
         selection = self.marked_obscure_listbox.curselection()
@@ -264,6 +275,7 @@ class CullSolutions(Frame):
 
         self.marked_obscure_listbox.select_clear(0, END)
         self.unmarked_listbox.select_clear(0, END)
+        self.set_counts()
 
     def obscure_the_rest(self, event):
         for word in self.unmarked_listbox.get(0, END):
@@ -273,6 +285,15 @@ class CullSolutions(Frame):
 
         self.marked_obscure_listbox.select_clear(0, END)
         self.unmarked_listbox.select_clear(0, END)
+        self.set_counts()
+
+    def set_counts(self):
+        count = len(self.marked_obscure_listbox.get(0, END))
+        self.controller.CullSolutions_obscurecount.set(f'<O> Obscure words: {count}')
+        count = len(self.unmarked_listbox.get(0, END))
+        self.controller.CullSolutions_unmarkedcount.set(f'<U> Unmarked words: {count}')
+        count = len(self.marked_human_listbox.get(0, END))
+        self.controller.CullSolutions_humancount.set(f'<H> Human words: {count}')
 
 class Cheat1(Frame):
     def __init__(self, parent, controller):
