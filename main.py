@@ -1,7 +1,7 @@
 from copy import deepcopy
 from tkinter import *
 from tkinter.ttk import *
-from tkinter import font as tkfont
+from tkinter import scrolledtext, END, font as tkfont
 from time import perf_counter
 import models
 
@@ -29,14 +29,14 @@ class AppWindow(Tk):
         self.CullSolutions_unmarkedcount.set(f'<U> Unmarked words: {0}')
         self.CullSolutions_humancount = StringVar()
         self.CullSolutions_humancount.set(f'<H> Human words: {0}')
+        self.show_once = 1
         self.cheat1_str = StringVar()
         self.cheat1_str.set('cheat 1 initial value')
         self.cheat2_str = StringVar()
         self.cheat2_str.set('cheat 2 initial value')
         self.cheat3_str = StringVar()
         self.cheat3_str.set('cheat 3 initial value')
-        self.cheat4_str = StringVar()
-        self.cheat4_str.set('Shows possible scenario details with less than 12 remaining words.')
+        self.cheat4_str = 'Shows possible scenario details with less than 12 remaining words.'
 
         #---------------------------------------- Generate Frames ---------------------------------
         self.frames = {}
@@ -47,6 +47,8 @@ class AppWindow(Tk):
             frame.pack(side='top', fill='both', expand=True)
 
             self.frames[page_name] = frame
+
+        self.frames['Cheat4'].update_result()
 
         self.current_frame = 'StartFrame'
         self.show_frame('StartFrame')
@@ -62,9 +64,9 @@ class AppWindow(Tk):
         self.current_frame = page_name
 
         if page_name == 'StartFrame':
-            frame.log_filename_entry.focus_set()
+            frame.start_entry.focus_set()
 
-    def start_game(self, log_filename, user_entry):
+    def start_game(self, user_entry):
         if user_entry.isalpha():
             word_length = len(user_entry)
             solution_word = user_entry.upper()
@@ -72,7 +74,7 @@ class AppWindow(Tk):
             word_length = int(user_entry)
             solution_word = False
 
-        self.current_game = models.GameData(word_length=word_length, solution_word=solution_word, log_filename=log_filename)
+        self.current_game = models.GameData(word_length=word_length, solution_word=solution_word)
 
         self.enter_guess(event=None)
 
@@ -91,16 +93,22 @@ class AppWindow(Tk):
         hint = self.frames['GuessHintEntry'].hint_entry.get().upper()
         result_str = self.current_game.new_hint(hint)
         print(result_str)
-        unmarked = self.current_game.sort_obscure_human()
+        self.marked_obscure, self.unmarked, self.marked_human = self.current_game.sort_obscure_human()
 
-        if unmarked:
-            self.cull_solutions_init(unmarked)
+        if self.show_once > 0:
+            self.cull_solutions_init()
+            self.show_once -= 1
         else:
             self.generate_show_results()
 
-    def cull_solutions_init(self, unmarked):
-        for word in unmarked:
+    def cull_solutions_init(self):
+
+        for word in self.marked_obscure:
+            self.frames['CullSolutions'].marked_obscure_listbox.insert(END, word)
+        for word in self.unmarked:
             self.frames['CullSolutions'].unmarked_listbox.insert(END, word)
+        for word in self.marked_human:
+            self.frames['CullSolutions'].marked_human_listbox.insert(END, word)
 
         unmarkedcount = len(self.frames['CullSolutions'].unmarked_listbox.get(0, END))
         self.CullSolutions_unmarkedcount.set(f'<U> Unmarked words: {unmarkedcount}')
@@ -112,8 +120,10 @@ class AppWindow(Tk):
         obscure_list = set(self.frames['CullSolutions'].marked_obscure_listbox.get(0, END))
         unmarked = set(self.frames['CullSolutions'].unmarked_listbox.get(0, END))
         human_list = set(self.frames['CullSolutions'].marked_human_listbox.get(0, END))
-        self.current_game.store_user_selections(obscure_list, human_list, unmarked)
-        self.hint_entered(event=None)
+        self.current_game.update_obscure_human(obscure_list, human_list, unmarked)
+        self.current_game.remove_obscure()
+        self.generate_show_results()
+        # self.hint_entered(event=None)
 
     def generate_show_results(self):
         self.current_game.prepare_cheats()
@@ -121,7 +131,8 @@ class AppWindow(Tk):
         self.cheat2_str.set(self.current_game.cheat2_display(top_to_show=25))
         self.cheat3_str.set(self.current_game.cheat3_display(top_to_show=25))
         if len(self.current_game.remaining_words) <= 12:
-            self.cheat4_str.set(self.current_game.cheat4_display())
+            self.cheat4_str = self.current_game.cheat4_display()
+            self.frames['Cheat4'].update_result()
         self.show_frame('Cheat1')
         solutions_frames = ('Cheat1', 'Cheat2', 'Cheat3', 'Cheat4')
         for solution_frame in solutions_frames:
@@ -152,12 +163,6 @@ class StartFrame(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
 
-        logfile_label = Label(self, text='Enter a log filename:', font=controller.prompt_font)
-        logfile_label.pack()
-        self.log_filename_entry = Entry(self, font=('calibre', 36, 'normal'), justify='center')
-        self.log_filename_entry.pack()
-        self.log_filename_entry.bind('<Return>', self.next_field)
-
         start_label = Label(self, text='Enter a known solution for hints to be automatically generated\n- OR -\nEnter a number to set the word length and enter hints manually from an external game.', font=controller.prompt_font)
         start_label.pack()
         self.start_entry = Entry(self, font=('calibre', 36, 'normal'), justify='center')
@@ -165,13 +170,9 @@ class StartFrame(Frame):
 
         self.start_entry.bind('<Return>', self.pass_value)
 
-    def next_field(self, event):
-        self.start_entry.focus_set()
-
     def pass_value(self, event):
-        log_filename = self.log_filename_entry.get()
         user_entry = self.start_entry.get().upper()
-        self.controller.start_game(log_filename, user_entry)
+        self.controller.start_game(user_entry)
 
 class GuessHintEntry(Frame):
     def __init__(self, parent, controller):
@@ -324,8 +325,12 @@ class Cheat4(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
 
-        cheat_label = Label(self, textvariable=self.controller.cheat4_str, font=controller.small_font)
-        cheat_label.pack()
+        self.cheat_label = scrolledtext.ScrolledText(self, width=100, height=40, font=controller.small_font)
+        self.cheat_label.pack()
+
+    def update_result(self):
+        self.cheat_label.delete('0.0',END)
+        self.cheat_label.insert('0.0', self.controller.cheat4_str)
 
 
 #------------------------------------------- Procedural --------------------------------------

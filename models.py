@@ -4,10 +4,10 @@ from re import finditer, findall
 from math import prod
 from statistics import mean, median, multimode
 import os, configparser, json
+import time
 
 class GameData ():
-    def __init__(self, word_length, solution_word, log_filename) -> None:
-        self.log_filename = log_filename + '.txt'
+    def __init__(self, word_length, solution_word) -> None:
         self.log_string = ''
         self.alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
         self.word_length = word_length
@@ -88,13 +88,21 @@ class GameData ():
                 marked_obscure = set(json.loads(words_config_parser[section_name]['obscure words']))
                 marked_human = set(json.loads(words_config_parser[section_name]['human words']))
 
-        self.remaining_words = self.remaining_words - marked_obscure
-        unmarked = self.remaining_words - marked_human
+        marked_obscure = self.remaining_words & marked_obscure
+        marked_human = self.remaining_words & marked_human
+        unmarked = self.remaining_words - (marked_obscure | marked_human)
             
-        if len(unmarked) == 0:
-            return False
-        else:
-            return unmarked
+        return marked_obscure, unmarked, marked_human
+
+    def remove_obscure(self):
+
+        words_config_parser = configparser.ConfigParser()
+        section_name = f'{self.word_length}-letter words'
+
+        words_config_parser.read('words_config.ini')
+        marked_obscure = set(json.loads(words_config_parser[section_name]['obscure words']))
+
+        self.remaining_words = self.remaining_words - marked_obscure
 
     def guesses_hints_display(self):
         if len(self.hints) < 1:
@@ -212,7 +220,7 @@ class GameData ():
             hints_list = []
             remaining_count_list = []
             for test_solution in self.remaining_words:
-                if not guess_is_possible or not any(guess in x for x in remaining_after_lists):
+                if not guess_is_possible or not any(guess in x for x in remaining_after_lists) or return_detail:
                     maybe_hint = self._hint_generator(guess, test_solution)
                     if not maybe_hint in hints_list:
                         maybe_remaining_words_list = self._process_hint(guess, maybe_hint, self.remaining_words)
@@ -372,31 +380,29 @@ class GameData ():
 
         return pretty_str
 
-    def save_log(self, event):
-        log_filename = self.practice_solution_str.get().lower() + '.txt'
-        with open(log_filename, 'w') as file:
-            file.write(self.log_string)
-
     def exit_with_logfile(self, event):
         self.save_log(self)
         self.controller.destroy()
 
-    def store_user_selections(self, obscure, human, unmarked):
+    def update_obscure_human(self, obscure, human, unmarked):
         words_config_parser = configparser.ConfigParser()
         section_name = f'{self.word_length}-letter words'
 
         words_config_parser.read('words_config.ini')
 
-        already_obscure = set(json.loads(words_config_parser[section_name]['obscure words']))
-        already_human = set(json.loads(words_config_parser[section_name]['human words']))
+        old_obscure = set(json.loads(words_config_parser[section_name]['obscure words']))
+        old_human = set(json.loads(words_config_parser[section_name]['human words']))
 
-        all_obscure = already_obscure | obscure
-        all_human = already_human | human
-        words_config_parser[section_name]['obscure words'] = json.dumps(list(all_obscure))
-        words_config_parser[section_name]['human words'] = json.dumps(list(all_human))
+        new_obscure = (old_obscure - human) | obscure
+        new_human = (old_human - obscure) | human
+        words_config_parser[section_name]['obscure words'] = json.dumps(list(new_obscure))
+        words_config_parser[section_name]['human words'] = json.dumps(list(new_human))
 
         with open('words_config.ini', 'w') as words_config_file:
             words_config_parser.write(words_config_file)
+    
     def save_log_file(self):
-        with open(self.log_filename, 'w') as log_file:
+        time_str = time.strftime('%Y-%m-%d-%A-%H:%M')
+        log_filename = time_str + '-' + self.guesses[-1]
+        with open(log_filename, 'w') as log_file:
             log_file.write(self.log_string)
