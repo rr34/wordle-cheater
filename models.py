@@ -9,6 +9,7 @@ class GameData ():
     def __init__(self, word_length, solution_word, log_filename) -> None:
         self.log_filename = log_filename + '.txt'
         self.log_string = ''
+        self.game_summary = ''
         self.alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
         self.word_length = word_length
         self.solution_word = solution_word
@@ -55,8 +56,9 @@ class GameData ():
     def new_hint(self, hint):
         self.hints.append(hint)
         self.log_string += self.section_separator
-        self.log_string += f'{self.guesses[-1]}: guess #{len(self.guesses)}\n'
-        self.log_string += f'{self.hints[-1]}: hint #{len(self.hints)}\n'
+        self.game_summary += f'{self.guesses[-1]}: guess #{len(self.guesses)}\n'
+        self.game_summary += f'{self.hints[-1]}: hint #{len(self.hints)-1}\n'
+        self.log_string += self.game_summary
         start_time = perf_counter()
         start_words = len(self.remaining_words)
         self.remaining_words = self._process_hint(self.guesses[-1], self.hints[-1], self.remaining_words)
@@ -88,13 +90,12 @@ class GameData ():
                 marked_obscure = set(json.loads(words_config_parser[section_name]['obscure words']))
                 marked_human = set(json.loads(words_config_parser[section_name]['human words']))
 
+        self.remaining_obscure = self.remaining_words & marked_obscure
+        self.remaining_unmarked = self.remaining_words - marked_obscure - marked_human
+        self.remaining_human = self.remaining_words & marked_human
         self.remaining_words = self.remaining_words - marked_obscure
-        unmarked = self.remaining_words - marked_human
-            
-        if len(unmarked) == 0:
-            return False
-        else:
-            return unmarked
+
+        return self.remaining_obscure, self.remaining_unmarked, self.remaining_human
 
     def guesses_hints_display(self):
         if len(self.hints) < 1:
@@ -212,7 +213,7 @@ class GameData ():
             hints_list = []
             remaining_count_list = []
             for test_solution in self.remaining_words:
-                if not guess_is_possible or not any(guess in x for x in remaining_after_lists):
+                if not guess_is_possible or not any(guess in x for x in remaining_after_lists) or return_detail:
                     maybe_hint = self._hint_generator(guess, test_solution)
                     if not maybe_hint in hints_list:
                         maybe_remaining_words_list = self._process_hint(guess, maybe_hint, self.remaining_words)
@@ -252,6 +253,15 @@ class GameData ():
 
         return guesses_hints_str
     
+    def log_sorted_words(self):
+        pretty_str = f'Remaining {len(self.remaining_obscure)} words marked obscure:\n'
+        pretty_str += str(self.remaining_obscure)
+        pretty_str += f'\nRemaining {len(self.remaining_unmarked)} words unmarked:\n'
+        pretty_str += str(self.remaining_unmarked)
+        pretty_str += f'\nRemaining {len(self.remaining_human)} words marked human:\n'
+        pretty_str += str(self.remaining_human)
+        self.log_string += pretty_str
+
     def prepare_cheats(self):
         self._cheat1()
         self._cheat2()
@@ -260,6 +270,10 @@ class GameData ():
             self._cheat4()
 
     def _cheat1(self):
+        pretty_str = f'Remaining {len(self.remaining_words)} words:\n'
+        pretty_str += str(self.remaining_words)
+        self.log_string += pretty_str
+
         start_time = perf_counter()
         self._letter_counter()
         elapsed_time = round(perf_counter() - start_time, 6)
@@ -392,6 +406,9 @@ class GameData ():
 
         all_obscure = already_obscure | obscure
         all_human = already_human | human
+        unmark = unmarked | (all_obscure & all_human)
+        all_obscure = all_obscure - unmark
+        all_human = all_human - unmark
         words_config_parser[section_name]['obscure words'] = json.dumps(list(all_obscure))
         words_config_parser[section_name]['human words'] = json.dumps(list(all_human))
 

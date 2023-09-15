@@ -36,6 +36,7 @@ class AppWindow(Tk):
         self.cheat3_str = StringVar()
         self.cheat3_str.set('cheat 3 initial value')
         self.cheat4_str = StringVar()
+        self.cull_once = True
         self.cheat4_str.set('Shows possible scenario details with less than 12 remaining words.')
 
         #---------------------------------------- Generate Frames ---------------------------------
@@ -91,20 +92,23 @@ class AppWindow(Tk):
         hint = self.frames['GuessHintEntry'].hint_entry.get().upper()
         result_str = self.current_game.new_hint(hint)
         print(result_str)
-        unmarked = self.current_game.sort_obscure_human()
+        obscure, unmarked, human = self.current_game.sort_obscure_human()
 
-        if unmarked:
-            self.cull_solutions_init(unmarked)
+        if self.cull_once:
+            self.cull_once = False
+            self.cull_solutions_init(obscure, unmarked, human)
         else:
             self.generate_show_results()
 
-    def cull_solutions_init(self, unmarked):
+    def cull_solutions_init(self, obscure, unmarked, human):
+        for word in obscure:
+            self.frames['CullSolutions'].marked_obscure_listbox.insert(END, word)
         for word in unmarked:
             self.frames['CullSolutions'].unmarked_listbox.insert(END, word)
-
+        for word in human:
+            self.frames['CullSolutions'].marked_human_listbox.insert(END, word)
         unmarkedcount = len(self.frames['CullSolutions'].unmarked_listbox.get(0, END))
         self.CullSolutions_unmarkedcount.set(f'<U> Unmarked words: {unmarkedcount}')
-
         self.show_frame('CullSolutions')
         self.frames['CullSolutions'].unmarked_listbox.focus_set()
 
@@ -113,6 +117,7 @@ class AppWindow(Tk):
         unmarked = set(self.frames['CullSolutions'].unmarked_listbox.get(0, END))
         human_list = set(self.frames['CullSolutions'].marked_human_listbox.get(0, END))
         self.current_game.store_user_selections(obscure_list, human_list, unmarked)
+        self.current_game.log_sorted_words()
         self.hint_entered(event=None)
 
     def generate_show_results(self):
