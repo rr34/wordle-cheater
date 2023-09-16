@@ -4,10 +4,10 @@ from re import finditer, findall
 from math import prod
 from statistics import mean, median, multimode
 import os, configparser, json
+import time
 
 class GameData ():
-    def __init__(self, word_length, solution_word, log_filename) -> None:
-        self.log_filename = log_filename + '.txt'
+    def __init__(self, word_length, solution_word) -> None:
         self.log_string = ''
         self.game_summary = ''
         self.alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
@@ -415,5 +415,7 @@ class GameData ():
         with open('words_config.ini', 'w') as words_config_file:
             words_config_parser.write(words_config_file)
     def save_log_file(self):
-        with open(self.log_filename, 'w') as log_file:
+        time_str = time.strftime('%Y-%m-%d-%A-%H:%M')
+        log_filename = time_str + '-' + self.guesses[-1]
+        with open(log_filename, 'w') as log_file:
             log_file.write(self.log_string)
